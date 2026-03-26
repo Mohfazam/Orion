@@ -1,5 +1,5 @@
 {
-  "name": "db",
+  "name": "@repo/db",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -14,6 +14,7 @@
     "pg": "^8.20.0"
   },
   "devDependencies": {
+     "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.15.3",
     "drizzle-kit": "^0.31.10",
     "ts-node": "^10.9.2",
