@@ -1,9 +1,9 @@
 {
-    "extends": "@repo/typescript-config/base.json",
-    "compilerOptions": {
-        "rootDir": "./src",
-        "outDir": "./dist",
-        "types":["node"]
-    },
-    "include": ["src/**/*"]
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist",
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "drizzle.config.ts"]
 }
