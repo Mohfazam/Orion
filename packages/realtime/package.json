@@ -1,0 +1,21 @@
+{
+  "name": "@repo/realtime",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "ws": "^8.17.1"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^20.14.0",
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.4.5"
+  }
+}
