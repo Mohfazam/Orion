@@ -33,10 +33,12 @@ export const saveFindings = async (runUUID: string, items: Finding[]) => {
 
 export const saveAgentResult = async (
   runUUID: string,
-  agent: "discovery" | "performance" | "hygiene" | "visualization",
+  agent: "discovery" | "performance" | "hygiene" | "scoring" | "visualization",
   data: Record<string, unknown>,
-  score?: number
+  score?: number,
+  startedAt?: Date   // ← add this param
 ) => {
+  const endedAt = new Date();
   await db.insert(agentResults).values({
     runId: runUUID,
     agent,
@@ -44,8 +46,8 @@ export const saveAgentResult = async (
     attempt: 1,
     status: "complete",
     score: score ?? null,
-    startedAt: new Date(),
-    endedAt: new Date(),
+    startedAt: startedAt ?? endedAt,  // ← use passed startedAt
+    endedAt,
     data,
     logs: null,
     error: null,

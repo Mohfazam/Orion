@@ -1,11 +1,13 @@
 import { OrionState } from "../types";
 import { finalizeRun, saveAgentResult, updateRunNode } from "../db";
 
-// Receives the completed state and writes the final summary to DB
-// TODO: trigger WebSocket event from here when WS layer is built
-
-export async function visualizationAgent(state: OrionState): Promise<OrionState> {
+export async function visualizationAgent(
+  state: OrionState,
+  focus?: string
+): Promise<OrionState> {
   const { runUUID, overallScore, passed, findings, sitemap } = state;
+  const startedAt = new Date();
+
   await updateRunNode(runUUID, "visualization_agent", "running");
 
   const summary = {
@@ -26,8 +28,19 @@ export async function visualizationAgent(state: OrionState): Promise<OrionState>
     passed,
   };
 
-  await saveAgentResult(runUUID, "visualization", summary, overallScore);
-  await finalizeRun(runUUID, overallScore, passed, new Date());
+  await saveAgentResult(
+    runUUID,
+    "visualization",
+    summary,
+    overallScore,
+    startedAt
+  );
+
+  await finalizeRun(runUUID, overallScore, passed, startedAt);
+
+  console.log(
+    `[visualization] run complete — score: ${overallScore} | passed: ${passed} | findings: ${findings.length}`
+  );
 
   return { ...state, currentNode: "complete" };
 }

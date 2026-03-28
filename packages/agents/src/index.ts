@@ -1,4 +1,4 @@
-import { runPipeline } from "./runner";
+import { runOrchestrated } from "./orchestrator";
 import { discoveryAgent } from "./nodes/discovery";
 import { performanceAgent } from "./nodes/performance";
 import { scoringAgent } from "./nodes/scoring";
@@ -12,8 +12,6 @@ export const runAgents = async (
   url: string,
   mode: RunMode
 ): Promise<void> => {
-  const startedAt = new Date();
-
   const initialState: OrionState = {
     runId,
     runUUID,
@@ -26,24 +24,16 @@ export const runAgents = async (
     currentNode: "discovery_agent",
   };
 
-  console.log(`[pipeline] starting run ${runId} → ${url}`);
-
-  const result = await runPipeline(
-    initialState,
-    [
-      discoveryAgent,
-      performanceAgent,
-      scoringAgent,
-      visualizationAgent,
-    ],
-    (name) => console.log(`[pipeline] ▶ ${name} started`),
-    (name, state) => console.log(`[pipeline] ✓ ${name} done — score: ${state.overallScore}`)
-  );
-
-  if (!result.success) {
-    console.error(`[pipeline] run ${runId} failed:`, result.error);
-    await failRun(runUUID, result.error ?? "unknown error");
-  } else {
-    console.log(`[pipeline] run ${runId} complete — score: ${result.state.overallScore} passed: ${result.state.passed}`);
+  try {
+    await runOrchestrated(initialState, {
+      discovery_agent:     discoveryAgent,
+      performance_agent:   performanceAgent,
+      scoring_agent:       scoringAgent,
+      visualization_agent: visualizationAgent,
+    });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error(`[runAgents] fatal error for ${runId}:`, error);
+    await failRun(runUUID, error);
   }
 };

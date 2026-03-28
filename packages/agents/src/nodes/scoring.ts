@@ -34,8 +34,9 @@ const PASS_THRESHOLD = 70;
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
-export async function scoringAgent(state: OrionState): Promise<OrionState> {
+export async function scoringAgent(state: OrionState, focus?: string): Promise<OrionState> {
   const { runUUID, findings } = state;
+  const startedAt = new Date();
   await updateRunNode(runUUID, "scoring_agent", "running");
 
   // ── Calculate total weight ─────────────────────────────────────────────
@@ -56,13 +57,19 @@ export async function scoringAgent(state: OrionState): Promise<OrionState> {
   const passed       = overallScore >= PASS_THRESHOLD;
 
   // ── Persist ────────────────────────────────────────────────────────────
-  await saveAgentResult(runUUID, "visualization", {
+  await saveAgentResult(
+  runUUID,
+  "scoring",
+  {
     totalWeight,
     overallScore,
     passed,
     threshold: PASS_THRESHOLD,
     findingsCount: findings.length,
-  }, overallScore);
+  },
+  overallScore,
+  startedAt
+);
 
   await updateRunNode(runUUID, "scoring_agent", "complete");
 

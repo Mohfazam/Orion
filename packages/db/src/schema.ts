@@ -26,6 +26,7 @@ export const agentEnum = pgEnum("agent_type", [
   "discovery",
   "hygiene",
   "performance",
+  "scoring",   
   "visualization",
 ]);
 
