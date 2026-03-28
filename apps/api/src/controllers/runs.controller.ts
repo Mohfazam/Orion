@@ -8,6 +8,7 @@ import {
 } from "@repo/db";
 import { eq, desc, ilike, and, inArray, SQL } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { runAgents } from "@repo/agents";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -88,21 +89,24 @@ export const createRun = async (req: Request, res: Response): Promise<void> => {
   }
 
   const runId = generateRunId();
+  const safeMode = mode as "manual" | "ci";   // ← fixes RunMode error
 
   const [newRun] = await db
     .insert(runs)
     .values({
       runId,
       url,
-      mode: mode as "manual" | "ci",
+      mode: safeMode,
       status: "queued",
       prevRunId: prevRunId ?? null,
       ciContext: ciContext ?? null,
     })
     .returning();
 
-  // TODO: Spawn LangGraph agent process here
-  // runnerService.spawn(runId, url, mode, ciContext);
+  // Fire and forget — agents run in background
+  runAgents(newRun!.runId, newRun!.id, url, safeMode).catch((err) => {
+    console.error(`[runner] unhandled error for ${newRun!.runId}:`, err);
+  });
 
   success(
     res,
@@ -174,12 +178,12 @@ export const listRuns = async (req: Request, res: Response): Promise<void> => {
 // ─── GET /runs/:runId ─────────────────────────────────────────────────────────
 
 export const getRun = async (req: Request, res: Response): Promise<void> => {
-  const { runId } = req.params;
+  const runId = String(req.params["runId"]);
 
   const [run] = await db
     .select()
     .from(runs)
-    .where(eq(runs.runId, runId!))
+    .where(eq(runs.runId, runId))
     .limit(1);
 
   if (!run) {
@@ -190,20 +194,11 @@ export const getRun = async (req: Request, res: Response): Promise<void> => {
   const [runFindings, runAgentResults, graphExecution] = await Promise.all([
     db.select().from(findings).where(eq(findings.runId, run.id)),
     db.select().from(agentResults).where(eq(agentResults.runId, run.id)),
-    db
-      .select()
-      .from(graphExecutions)
-      .where(eq(graphExecutions.runId, run.id))
-      .limit(1),
+    db.select().from(graphExecutions).where(eq(graphExecutions.runId, run.id)).limit(1),
   ]);
 
-  // Fixed: explicitly typed so TypeScript knows the valid keys
   const bySeverity: Record<Severity, number> = {
-    critical: 0,
-    high: 0,
-    medium: 0,
-    low: 0,
-    info: 0,
+    critical: 0, high: 0, medium: 0, low: 0, info: 0,
   };
   const byAgent: Record<string, number> = {};
 
@@ -216,7 +211,7 @@ export const getRun = async (req: Request, res: Response): Promise<void> => {
   success(res, {
     ...run,
     findings: runFindings,
-    agentResults: runAgentResults.map((r:any) => ({
+    agentResults: runAgentResults.map((r: any) => ({
       ...r,
       durationMs:
         r.startedAt && r.endedAt
@@ -232,10 +227,8 @@ export const getRun = async (req: Request, res: Response): Promise<void> => {
   });
 };
 
-// ─── GET /runs/:runId/status ──────────────────────────────────────────────────
-
 export const getRunStatus = async (req: Request, res: Response): Promise<void> => {
-  const { runId } = req.params;
+  const runId = String(req.params["runId"]);
 
   const [run] = await db
     .select({
@@ -247,7 +240,7 @@ export const getRunStatus = async (req: Request, res: Response): Promise<void> =
       completedAt: runs.completedAt,
     })
     .from(runs)
-    .where(eq(runs.runId, runId!))
+    .where(eq(runs.runId, runId))
     .limit(1);
 
   if (!run) {
@@ -270,7 +263,7 @@ export const getActiveRuns = async (_req: Request, res: Response): Promise<void>
       createdAt: runs.createdAt,
     })
     .from(runs)
-    .where(inArray(runs.status, ["queued", "running"]))
+    .where(inArray(runs.status, ["queued", "running"] as ("queued" | "running" | "complete" | "failed")[]))
     .orderBy(desc(runs.createdAt));
 
   success(res, { count: activeRuns.length, runs: activeRuns });
@@ -279,12 +272,12 @@ export const getActiveRuns = async (_req: Request, res: Response): Promise<void>
 // ─── DELETE /runs/:runId ──────────────────────────────────────────────────────
 
 export const cancelRun = async (req: Request, res: Response): Promise<void> => {
-  const { runId } = req.params;
+  const runId = String(req.params["runId"]);
 
   const [run] = await db
     .select({ id: runs.id, runId: runs.runId, status: runs.status })
     .from(runs)
-    .where(eq(runs.runId, runId!))
+    .where(eq(runs.runId, runId))
     .limit(1);
 
   if (!run) {
@@ -306,9 +299,6 @@ export const cancelRun = async (req: Request, res: Response): Promise<void> => {
     .set({ status: "failed", completedAt: new Date() })
     .where(eq(runs.id, run.id))
     .returning({ runId: runs.runId, status: runs.status });
-
-  // TODO: Signal agent runner to kill the process
-  // runnerService.kill(runId);
 
   success(res, {
     runId: updated!.runId,
