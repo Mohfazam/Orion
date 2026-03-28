@@ -1,6 +1,7 @@
 import { OrionState } from "./types";
 import { askJSON } from "./llm";
 import { failRun, updateRunNode } from "./db";
+import { logger } from "@repo/realtime";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -156,6 +157,7 @@ export const runOrchestrated = async (
       break;
     }
 
+    // ── agentName declared HERE — all logger calls using it must be below ─
     const agentName = decision.next as AgentName;
     const agentFn = agents[agentName];
 
@@ -185,17 +187,19 @@ export const runOrchestrated = async (
 
     // ── Run the agent ─────────────────────────────────────────────────────
     try {
-      console.log(`[orchestrator] ▶ running ${agentName}...`);
+      logger.agentStarted(state.runId, agentName);
       await updateRunNode(state.runUUID, agentName, "running");
 
       state = await agentFn(state, decision.focus);
       completedAgents.push(agentName);
 
+      logger.agentCompleted(state.runId, agentName);
       console.log(
         `[orchestrator] ✓ ${agentName} complete | findings so far: ${state.findings.length}`
       );
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
+      logger.info(state.runId, agentName, `agent failed: ${errorMsg}`);
       console.error(`[orchestrator] ✗ ${agentName} failed:`, errorMsg);
 
       if (failRecord) {
