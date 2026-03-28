@@ -30,6 +30,9 @@ importers:
       '@repo/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@repo/realtime':
+        specifier: workspace:*
+        version: link:../../packages/realtime
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6

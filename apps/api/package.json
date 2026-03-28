@@ -19,6 +19,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@repo/realtime": "workspace:*",
     "@repo/agents": "workspace:*",
     "@repo/db": "workspace:*",
     "@types/express": "^5.0.6",
