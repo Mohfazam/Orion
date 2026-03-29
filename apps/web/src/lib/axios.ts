@@ -35,6 +35,15 @@ api.interceptors.response.use(
     }
     
     // Auto-unwrap and return the genuine payload to the services
+    // If the response is paginated, include the pagination metadata
+    const rawData = response.data as any;
+    if (rawData.pagination) {
+      return {
+        data: payload.data,
+        ...rawData.pagination
+      };
+    }
+    
     return payload.data;
   },
   (error: AxiosError<ApiResponse>) => {

@@ -288,19 +288,24 @@ export function RunsTable({
 
                     {/* Duration */}
                     <td style={{ padding: "14px 16px" }}>
-                      {run.durationMs ? (
-                        <span
-                          style={{
-                            display: "inline-flex", alignItems: "center", gap: 4,
-                            fontSize: 12, fontWeight: 600,
-                            color: "#475569", fontVariantNumeric: "tabular-nums",
-                          }}
-                        >
-                          {formatDuration(run.durationMs)}
-                        </span>
-                      ) : (
-                        <span style={{ color: "#CBD5E1", fontSize: 13 }}>—</span>
-                      )}
+                      {(() => {
+                        const rWithComp = run as Run & { completedAt?: string };
+                        const computedMs = rWithComp.durationMs || (rWithComp.completedAt && rWithComp.createdAt ? (new Date(rWithComp.completedAt).getTime() - new Date(rWithComp.createdAt).getTime()) : null);
+                        if (!computedMs) return <span style={{ color: "#CBD5E1", fontSize: 13 }}>—</span>;
+                        const s = Math.floor(computedMs / 1000);
+                        const durStr = s < 1 ? "< 1s" : `${Math.floor(s / 60)}m ${s % 60}s`;
+                        return (
+                          <span
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              fontSize: 12, fontWeight: 600,
+                              color: "#475569", fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {durStr}
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     {/* Actions */}
