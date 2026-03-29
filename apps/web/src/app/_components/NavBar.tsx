@@ -34,7 +34,7 @@ export function NavBar({ activeCount }: NavBarProps) {
             </div>
 
             <div className="hidden md:flex items-center gap-6 text-sm font-medium" style={{ color: "#64748B" }}>
-                {["Dashboard", "Integrations", "Docs"].map((item, i) => (
+                {["Dashboard", "", ""].map((item, i) => (
                     <button
                         key={item}
                         className="transition-colors hover:text-slate-900"
@@ -61,13 +61,6 @@ export function NavBar({ activeCount }: NavBarProps) {
                         </span>
                     )}
                     {activeCount > 0 ? `${activeCount} active` : "0 idle"}
-                </div>
-
-                <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                    style={{ background: "linear-gradient(135deg, #3B82F6, #1D4ED8)" }}
-                >
-                    T
                 </div>
             </div>
         </nav>

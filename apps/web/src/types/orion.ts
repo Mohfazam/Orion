@@ -23,6 +23,7 @@ export interface Run {
   updatedAt: string;
   durationMs?: number;
   findings?: number;
+  prevRunId?: string;
 }
 
 export interface Finding {
@@ -30,21 +31,32 @@ export interface Finding {
   runId: string;
   agentType: AgentType;
   severity: Severity;
-  message: string;
   createdAt: string;
+  title: string;
+  detail: string;
+  file: string;
+  confidence: number;
+  fixSuggestion: string;
 }
 
 export interface AgentInfo {
   id: string;
   type: AgentType;
   name: string;
-  status: 'pending' | 'active' | 'completed' | 'failed';
+  status: 'queued' | 'running' | 'complete' | 'failed';
+  durationMs?: number;
+  score?: number;
 }
 
 export interface RunDiff {
   previousRunId: string;
   currentRunId: string;
   scoreDifference: number;
+  scoreDelta: number;
+  verdict: 'regression' | 'improvement' | 'unchanged';
+  newFindingsCount: number;
+  resolvedFindingsCount: number;
+  unchangedFindingsCount: number;
   newFindings: Finding[];
   resolvedFindings: Finding[];
 }
