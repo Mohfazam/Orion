@@ -131,27 +131,29 @@ export function RunHero({ run, onCancel }: RunHeroProps) {
               </a>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="flex flex-wrap items-stretch gap-3">
               {[
-                { icon: <BarChart2 size={14} />, label: "Findings", value: String(run.findings || 0), accent: sc.main },
+                { icon: <BarChart2 size={14} />, label: "Findings", value: String(Array.isArray(run.findings) ? run.findings.length : (run.findings || 0)), accent: sc.main },
                 { icon: <Clock size={14} />,     label: "Duration", value: formatDuration(run.durationMs), accent: "#2563EB" },
                 { icon: <Calendar size={14} />,  label: "Started",  value: new Date(run.createdAt).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }), accent: "#7C3AED" },
                 { icon: <Eye size={14} />,       label: "Run ID",   value: run.runId, accent: "#0891B2" },
               ].map((m) => (
                 <div
                   key={m.label}
-                  className="rounded-xl p-3 flex flex-col gap-1"
+                  className="rounded-xl p-3 flex flex-col gap-1 flex-1 min-w-[130px]"
                   style={{ background: "#fff", border: "1px solid #F1F5F9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <span style={{ color: m.accent }}>{m.icon}</span>
-                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#94A3B8" }}>
+                  <div className="flex items-center gap-1.5 overflow-hidden">
+                    <span style={{ color: m.accent, flexShrink: 0 }}>{m.icon}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider truncate" style={{ color: "#94A3B8" }}>
                       {m.label}
                     </span>
                   </div>
                   <div
                     className="font-bold text-sm truncate"
                     style={{ color: "#0F172A", fontFamily: m.label === "Run ID" ? "monospace" : undefined }}
+                    title={m.value}
+                    suppressHydrationWarning
                   >
                     {m.value}
                   </div>

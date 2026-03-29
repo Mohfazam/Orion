@@ -59,60 +59,77 @@ export function PipelineStepper({ agents }: PipelineStepperProps) {
         </div>
       </div>
 
-      <div className="flex gap-0 overflow-x-auto pb-2">
-        {PIPELINE.map((step, index) => {
-          const isLast = index === PIPELINE.length - 1;
-          const statusConfig = {
-            complete: { ring: "#DBEAFE", bg: "#EFF6FF",  icon: <CheckCircle2 size={14} style={{ color: "#2563EB" }} />, lineColor: "#BFDBFE" },
-            running:  { ring: "#DDD6FE", bg: "#F5F3FF",  icon: <span className="w-3 h-3 rounded-full animate-pulse" style={{ background: "#8B5CF6" }} />, lineColor: "#E2E8F0" },
-            queued:   { ring: "#E2E8F0", bg: "#F8FAFC",  icon: <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#CBD5E1" }} />, lineColor: "#E2E8F0" },
-            failed:   { ring: "#FECACA", bg: "#FEF2F2",  icon: <XCircle size={14} style={{ color: "#DC2626" }} />, lineColor: "#E2E8F0" },
-          };
-          const s = statusConfig[step.status];
+      <div className="relative pt-2 pb-4 px-2 sm:px-8">
+        
+        {/* Background Tracker Line */}
+        <div 
+          className="absolute top-7 left-[8%] right-[8%] h-0.5" 
+          style={{ background: "#E2E8F0", zIndex: 0 }} 
+        />
 
-          return (
-            <motion.div
-              key={step.key}
-              className="flex-1 flex flex-col min-w-[150px]"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + index * 0.1, duration: 0.4 }}
-            >
-              <div className="flex items-center">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 z-10"
-                  style={{
-                    background: s.bg,
-                    border: `2px solid ${s.ring}`,
-                    boxShadow: step.status === "complete" ? "0 0 0 4px #EFF6FF" : undefined,
-                  }}
-                >
-                  {s.icon}
-                </div>
-                {!isLast && (
-                  <div
-                    className="flex-1 h-0.5 mx-1"
-                    style={{ background: step.status === "complete" ? "#BFDBFE" : "#E2E8F0" }}
+        <div className="relative flex justify-between z-10">
+          {PIPELINE.map((step, index) => {
+            const isLast = index === PIPELINE.length - 1;
+            const statusConfig = {
+              complete: { ring: "#DBEAFE", bg: "#EFF6FF",  icon: <CheckCircle2 size={16} style={{ color: "#2563EB" }} /> },
+              running:  { ring: "#DDD6FE", bg: "#F5F3FF",  icon: <span className="w-3.5 h-3.5 rounded-full animate-pulse" style={{ background: "#8B5CF6" }} /> },
+              queued:   { ring: "#E2E8F0", bg: "#F8FAFC",  icon: <span className="w-3 h-3 rounded-full" style={{ background: "#CBD5E1" }} /> },
+              failed:   { ring: "#FECACA", bg: "#FEF2F2",  icon: <XCircle size={16} style={{ color: "#DC2626" }} /> },
+            };
+            const s = statusConfig[step.status];
+
+            return (
+              <motion.div
+                key={step.key}
+                className="flex flex-col items-center text-center w-1/4"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + index * 0.1, duration: 0.4 }}
+              >
+                {/* Active connecting line fill */}
+                {index > 0 && step.status !== "queued" && (
+                  <div 
+                    className="absolute top-5 h-0.5"
+                    style={{ 
+                      background: step.status === "complete" ? "#BFDBFE" : "#DDD6FE", 
+                      right: "50%", 
+                      width: "50%",
+                      zIndex: -1 
+                    }}
                   />
                 )}
-              </div>
 
-              <div className="mt-3 pr-4">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span style={{ color: "#64748B", flexShrink: 0 }}>{step.icon}</span>
-                  <span className="text-sm font-semibold" style={{ color: "#0F172A" }}>{step.name}</span>
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center mb-3 bg-white"
+                  style={{
+                    border: `2px solid ${s.ring}`,
+                    boxShadow: step.status === "complete" ? "0 0 0 4px #EFF6FF" : step.status === "running" ? "0 0 0 4px #F5F3FF" : "0 0 0 4px #fff",
+                  }}
+                >
+                  <div className="w-full h-full rounded-full flex items-center justify-center" style={{ background: s.bg }}>
+                     {s.icon}
+                  </div>
                 </div>
-                <p className="text-xs leading-relaxed" style={{ color: "#94A3B8" }}>{step.desc}</p>
+
+                <div className="flex items-center justify-center gap-1.5 mb-1.5 text-xs sm:text-sm">
+                  <span style={{ color: "#64748B" }}>{step.icon}</span>
+                  <span className="font-bold" style={{ color: "#0F172A" }}>{step.name}</span>
+                </div>
+                
+                <p className="hidden sm:block text-xs leading-snug px-2 max-w-[160px]" style={{ color: "#94A3B8" }}>
+                  {step.desc}
+                </p>
+                
                 {step.duration && (
-                  <div className="flex items-center gap-1 mt-1.5">
+                  <div className="flex items-center justify-center gap-1 mt-2 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
                     <Clock size={10} style={{ color: "#2563EB" }} />
-                    <span className="text-xs font-medium" style={{ color: "#2563EB" }}>{step.duration}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#2563EB", fontSize: 10 }}>{step.duration}</span>
                   </div>
                 )}
-              </div>
-            </motion.div>
-          );
-        })}
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </motion.div>
   );
