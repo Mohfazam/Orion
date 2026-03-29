@@ -17,12 +17,12 @@ export const AGENT_LIST: AgentType[] = [
 
 export const getScoreColor = (score: number): string => {
   if (score >= 90) return 'text-green-600';
-  if (score >= 50) return 'text-yellow-600';
+  if (score >= 70) return 'text-yellow-600';
   return 'text-red-600';
 };
 
 export const getScoreLabel = (score: number): string => {
   if (score >= 90) return 'Excellent';
-  if (score >= 50) return 'Needs Improvement';
+  if (score >= 70) return 'Needs Improvement';
   return 'Poor';
 };

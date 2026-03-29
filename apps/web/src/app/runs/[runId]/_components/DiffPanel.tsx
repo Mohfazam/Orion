@@ -9,8 +9,8 @@ export interface DiffPanelProps {
 }
 
 export function DiffPanel({ diff }: DiffPanelProps) {
-  const isRegression = diff.verdict === "regression";
-  const isImprovement = diff.verdict === "improvement";
+  const isRegression = diff.scoreDelta < 0;
+  const isImprovement = diff.scoreDelta > 0;
 
   return (
     <motion.div
@@ -41,29 +41,12 @@ export function DiffPanel({ diff }: DiffPanelProps) {
             Diff vs Previous Run
           </h2>
           <p className="text-xs" style={{ color: "#94A3B8" }}>
-            Compared to {diff.previousRunId.slice(0, 8)}... (Δ {diff.scoreDifference})
+            Compared to {diff.previousRunId.slice(0, 8)}...
           </p>
         </div>
-
-        <span
-          className="ml-auto inline-flex items-center gap-1.5 text-sm font-bold px-4 py-1.5 rounded-full"
-          style={{
-            background: isRegression ? "#FEF2F2" : isImprovement ? "#ECFDF5" : "#F8FAFC",
-            color: isRegression ? "#DC2626" : isImprovement ? "#059669" : "#64748B",
-            border: `1.5px solid ${isRegression ? "#FECACA" : isImprovement ? "#A7F3D0" : "#E2E8F0"}`,
-          }}
-        >
-          {isRegression ? (
-            <><ArrowDownRight size={14} /> Regression</>
-          ) : isImprovement ? (
-            <><ArrowUpRight size={14} /> Improvement</>
-          ) : (
-            <><Minus size={14} /> Unchanged</>
-          )}
-        </span>
       </div>
 
-      <div className="px-5 py-5 grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="px-5 py-5 grid grid-cols-2 lg:grid-cols-3 gap-4">
         <div
           className="col-span-2 lg:col-span-1 rounded-2xl p-4 flex flex-col items-start"
           style={{ 
@@ -91,22 +74,16 @@ export function DiffPanel({ diff }: DiffPanelProps) {
         {[
           {
             label: "New Findings",
-            value: diff.newFindingsCount,
+            value: diff.newCount,
             icon: <AlertTriangle size={14} />,
             bg: "#FFF7ED", border: "#FED7AA", text: "#EA580C", muted: "#FDBA74",
           },
           {
             label: "Resolved",
-            value: diff.resolvedFindingsCount,
+            value: diff.resolvedCount,
             icon: <CheckCircle2 size={14} />,
             bg: "#ECFDF5", border: "#A7F3D0", text: "#059669", muted: "#6EE7B7",
-          },
-          {
-            label: "Unchanged",
-            value: diff.unchangedFindingsCount,
-            icon: <Minus size={14} />,
-            bg: "#F8FAFC", border: "#E2E8F0", text: "#64748B", muted: "#CBD5E1",
-          },
+          }
         ].map((s) => (
           <div
             key={s.label}

@@ -1,4 +1,5 @@
-import { Target } from "lucide-react";
+import { Target, GitBranch } from "lucide-react";
+import { CONNECT_REPO_URL } from "../../services/repos.service";
 
 export interface NavBarProps {
     activeCount: number;
@@ -46,6 +47,20 @@ export function NavBar({ activeCount }: NavBarProps) {
             </div>
 
             <div className="flex items-center gap-3">
+                <a
+                    href={CONNECT_REPO_URL}
+                    className="hidden sm:flex items-center gap-2 text-xs font-semibold px-4 py-1.5 rounded-full transition-all hover:bg-blue-50"
+                    style={{
+                        background: "#ffffff",
+                        color: "#2563EB",
+                        border: "1px solid #BFDBFE",
+                        textDecoration: "none",
+                        cursor: "pointer"
+                    }}
+                >
+                    <GitBranch size={14} />
+                    Connect GitHub Repo
+                </a>
                 <div
                     className="hidden sm:flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full"
                     style={{

@@ -2,7 +2,7 @@ import api from '../lib/axios';
 import { Run, RunStatus, RunDiff, PaginatedResponse } from '../types/orion';
 
 export const runsService = {
-  getRuns: (params?: { limit?: number; order?: 'asc' | 'desc'; status?: string; page?: number; passed?: boolean }): Promise<PaginatedResponse<Run>> => {
+  getRuns: (params?: { limit?: number; order?: 'asc' | 'desc'; status?: string; page?: number; passed?: boolean; mode?: string }): Promise<PaginatedResponse<Run>> => {
     return api.get('/runs', { params });
   },
   

@@ -298,7 +298,7 @@ export default function RunDetailPage() {
               onPageChange={setFindingsPage}
             />
             
-            <FindingsCharts findings={findings} agents={agents} />
+            <FindingsCharts findings={findings} agents={agents} run={run} />
           </div>
 
           <div className="flex flex-col gap-4">

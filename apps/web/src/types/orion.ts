@@ -24,6 +24,16 @@ export interface Run {
   durationMs?: number;
   findings?: number;
   prevRunId?: string;
+  mode?: 'manual' | 'ci' | 'api';
+  summary?: {
+    bySeverity: {
+      critical: number;
+      high: number;
+      medium: number;
+      low: number;
+      info: number;
+    };
+  };
 }
 
 export interface Finding {
@@ -49,16 +59,13 @@ export interface AgentInfo {
 }
 
 export interface RunDiff {
-  previousRunId: string;
   currentRunId: string;
-  scoreDifference: number;
+  previousRunId: string;
   scoreDelta: number;
-  verdict: 'regression' | 'improvement' | 'unchanged';
-  newFindingsCount: number;
-  resolvedFindingsCount: number;
-  unchangedFindingsCount: number;
   newFindings: Finding[];
   resolvedFindings: Finding[];
+  newCount: number;
+  resolvedCount: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -68,4 +75,21 @@ export interface PaginatedResponse<T> {
   page: number;
   limit?: number;
   total?: number;
+}
+
+export interface Repo {
+  id: string;
+  owner: string;
+  repo: string;
+  installationId: string;
+  stagingUrl: string;
+  createdAt: string;
+  lastRun: {
+    runId: string;
+    status: RunStatus;
+    overallScore: number | null;
+    passed: boolean | null;
+    createdAt: string;
+  } | null;
+  runs?: Run[];
 }
