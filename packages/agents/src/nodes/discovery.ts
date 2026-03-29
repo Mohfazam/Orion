@@ -64,7 +64,7 @@ export async function discoveryAgent(
 
     // ── 1. Visit root ──────────────────────────────────────────────────────
     const rootRes = await page.goto(url, {
-      timeout: 30_000,
+      timeout: 60_000,
       waitUntil: "domcontentloaded",
     });
     sitemap.push({ url, depth: 0, status: rootRes?.status() ?? 0 });
@@ -90,7 +90,7 @@ export async function discoveryAgent(
     for (const link of internalLinks) {
       try {
         const res = await page.goto(link, {
-          timeout: 15_000,
+          timeout: 30_000,
           waitUntil: "domcontentloaded",
         });
         const status = res?.status() ?? 0;

@@ -3,6 +3,7 @@ import healthRoutes from "./routes/route";
 import runsRoutes from "./routes/runs.routes";
 import findingsRoutes from "./routes/findings.routes";
 import webhookRoutes from "./routes/webhook.routes";
+import repoRoutes from "./routes/repos.routes";
 import cors from "cors"
 
 const app: Express = express();
@@ -15,5 +16,6 @@ app.use("/health", healthRoutes);
 app.use("/api/v1/runs", runsRoutes);
 app.use("/api/v1/findings",  findingsRoutes);
 app.use("/api/v1/webhooks", webhookRoutes);
+app.use("/api/v1/repos", repoRoutes);
 
 export default app;
