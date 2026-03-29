@@ -1,0 +1,77 @@
+﻿
+> Orion@ dev C:\VS Code\Feuji\Lost-Arc
+> turbo run dev
+
+
+   ΓÇó Packages in scope: @repo/agents, @repo/db, @repo/eslint-config, @repo/realtime, @repo/typescript-config, @repo/ui, api, docs, web
+   ΓÇó Running dev in 9 packages
+   ΓÇó Remote caching disabled
+
+docs:dev: cache bypass, force executing a2254bb6a27e31ea
+api:dev: cache bypass, force executing 46d1aeeb77fa28d0
+@repo/agents:dev: cache bypass, force executing f89bf9197bff4b20
+web:dev: cache bypass, force executing 3efc58f1fd1195cf
+@repo/realtime:dev: cache bypass, force executing 6168a595828e8ede
+@repo/db:dev: cache bypass, force executing 09b80fee5947d51f
+docs:dev: 
+docs:dev: > docs@0.1.0 dev C:\VS Code\Feuji\Lost-Arc\apps\docs
+docs:dev: > next dev --port 3001
+docs:dev: 
+@repo/agents:dev: 
+@repo/agents:dev: > @repo/agents@1.0.0 dev C:\VS Code\Feuji\Lost-Arc\packages\agents
+@repo/agents:dev: > tsc --watch
+@repo/agents:dev: 
+@repo/realtime:dev: 
+@repo/realtime:dev: > @repo/realtime@1.0.0 dev C:\VS Code\Feuji\Lost-Arc\packages\realtime
+@repo/realtime:dev: > tsc --watch
+@repo/realtime:dev: 
+api:dev: 
+api:dev: > api@1.0.0 dev C:\VS Code\Feuji\Lost-Arc\apps\api
+api:dev: > ts-node-dev --respawn --transpile-only src/index.ts
+api:dev: 
+web:dev: 
+web:dev: > web@0.1.0 dev C:\VS Code\Feuji\Lost-Arc\apps\web
+web:dev: > next dev --port 3000
+web:dev: 
+@repo/db:dev: 
+@repo/db:dev: > @repo/db@1.0.0 dev C:\VS Code\Feuji\Lost-Arc\packages\db
+@repo/db:dev: > tsc --watch
+@repo/db:dev: 
+@repo/agents:dev: [2J[3J[H1:10:38 am - Starting compilation in watch mode...
+@repo/agents:dev: 
+@repo/realtime:dev: [2J[3J[H1:10:38 am - Starting compilation in watch mode...
+@repo/realtime:dev: 
+@repo/db:dev: [2J[3J[H1:10:38 am - Starting compilation in watch mode...
+@repo/db:dev: 
+api:dev: [INFO] 01:10:38 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 6.0.2)
+web:dev: Γ¿» Failed to start server
+docs:dev: Γ¿» Failed to start server
+web:dev: Error: listen EADDRINUSE: address already in use :::3000
+web:dev:     at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+web:dev:     at new Promise (<anonymous>) {
+web:dev:   code: 'EADDRINUSE',
+web:dev:   errno: -4091,
+web:dev:   syscall: 'listen',
+web:dev:   address: '::',
+web:dev:   port: 3000
+web:dev: }
+docs:dev: Error: listen EADDRINUSE: address already in use :::3001
+docs:dev:     at <unknown> (Error: listen EADDRINUSE: address already in use :::3001)
+docs:dev:     at new Promise (<anonymous>) {
+docs:dev:   code: 'EADDRINUSE',
+docs:dev:   errno: -4091,
+docs:dev:   syscall: 'listen',
+docs:dev:   address: '::',
+docs:dev:   port: 3001
+docs:dev: }
+web:dev: [?25h
+docs:dev: [?25h
+web:dev: ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.
+docs:dev: ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.
+
+ Tasks:    0 successful, 6 total
+Cached:    0 cached, 6 total
+  Time:    1.892s 
+Failed:    docs#dev, web#dev
+
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.
