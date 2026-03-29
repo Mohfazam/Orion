@@ -5,7 +5,7 @@ import { Run } from '../types/orion';
 export const useActiveRuns = (intervalMs = 5000) => {
   const [activeRuns, setActiveRuns] = useState<Run[]>([]);
   const [error, setError] = useState<Error | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     let isMounted = true;

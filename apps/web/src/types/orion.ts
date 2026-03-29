@@ -14,12 +14,15 @@ export interface ApiResponse<T = any> {
 
 export interface Run {
   id: string;
+  runId: string;
   url: string;
   status: RunStatus;
-  score?: number;
-  pass?: boolean;
+  overallScore?: number;
+  passed?: boolean;
   createdAt: string;
   updatedAt: string;
+  durationMs?: number;
+  findings?: number;
 }
 
 export interface Finding {
@@ -44,4 +47,13 @@ export interface RunDiff {
   scoreDifference: number;
   newFindings: Finding[];
   resolvedFindings: Finding[];
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  hasNext: boolean;
+  hasPrev: boolean;
+  page: number;
+  limit?: number;
+  total?: number;
 }

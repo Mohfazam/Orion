@@ -1,13 +1,13 @@
 import api from '../lib/axios';
-import { Run, RunStatus, RunDiff } from '../types/orion';
+import { Run, RunStatus, RunDiff, PaginatedResponse } from '../types/orion';
 
 export const runsService = {
-  getRuns: (): Promise<Run[]> => {
-    return api.get('/runs');
+  getRuns: (params?: { limit?: number; order?: 'asc' | 'desc'; status?: string; page?: number }): Promise<PaginatedResponse<Run>> => {
+    return api.get('/runs', { params });
   },
   
-  createRun: (url: string): Promise<Run> => {
-    return api.post('/runs', { url });
+  createRun: (data: { url: string; mode: string }): Promise<Run & { runId?: string }> => {
+    return api.post('/runs', data);
   },
   
   getRunById: (runId: string): Promise<Run> => {
@@ -19,7 +19,7 @@ export const runsService = {
   },
   
   cancelRun: (runId: string): Promise<void> => {
-    return api.post(`/runs/${runId}/cancel`);
+    return api.delete(`/runs/${runId}`);
   },
   
   getActiveRuns: (): Promise<Run[]> => {

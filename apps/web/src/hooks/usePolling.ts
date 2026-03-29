@@ -5,7 +5,7 @@ import { RunStatus } from '../types/orion';
 export const usePolling = (runId: string, initialStatus?: RunStatus) => {
   const [status, setStatus] = useState<RunStatus | null>(initialStatus || null);
   const [error, setError] = useState<Error | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (!runId) return;
