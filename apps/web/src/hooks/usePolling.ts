@@ -2,15 +2,20 @@ import { useEffect, useState, useRef } from 'react';
 import { runsService } from '../services/runs.service';
 import { RunStatus } from '../types/orion';
 
-export const usePolling = (runId: string, initialStatus?: RunStatus) => {
-  const [status, setStatus] = useState<RunStatus | null>(initialStatus || null);
+export const usePolling = (runId: string, enabled: boolean) => {
+  const [status, setStatus] = useState<RunStatus | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
-    if (!runId) return;
-
     let isMounted = true;
+    
+    if (!runId || !enabled) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      return;
+    }
 
     const poll = async () => {
       try {
@@ -29,10 +34,7 @@ export const usePolling = (runId: string, initialStatus?: RunStatus) => {
       }
     };
 
-    // Initial check
-    if (status === 'queued' || status === 'running' || status === null) {
-      poll();
-    }
+    poll();
 
     return () => {
       isMounted = false;
@@ -40,7 +42,7 @@ export const usePolling = (runId: string, initialStatus?: RunStatus) => {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [runId, status]);
+  }, [runId, enabled]);
 
   return { status, error };
 };

@@ -1,46 +1,84 @@
 import { useEffect, useState, useRef } from 'react';
 
-type SocketEvent = { type: string; payload?: any };
+export type SocketEvent = { type: string; [key: string]: any };
 
-export const useRunSocket = (runId: string) => {
-  const [lastEvent, setLastEvent] = useState<SocketEvent | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+export const useRunSocket = (runId: string, enabled: boolean = true) => {
+  const [events, setEvents] = useState<SocketEvent[]>([]);
+  const [connected, setConnected] = useState(false);
+  
   const wsRef = useRef<WebSocket | null>(null);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!runId) return;
-
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4001';
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setIsConnected(true);
-      // Immediately subscribe to the run
-      ws.send(JSON.stringify({ type: 'subscribe', runId }));
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setLastEvent(data);
-      } catch (error) {
-        console.error('Failed to parse WebSocket message', error);
+    if (!runId || !enabled) {
+      if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+        wsRef.current.close();
       }
+      wsRef.current = null;
+      setConnected(false);
+      return;
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4001';
+    let ws: WebSocket | null = null;
+    let fallbackAttempted = false;
+
+    const connectWS = (url: string) => {
+      ws = new WebSocket(url);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        setConnected(true);
+        ws?.send(JSON.stringify({ type: 'subscribe', runId }));
+        
+        heartbeatRef.current = setInterval(() => {
+          if (ws?.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 30000);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          data.eventType = data.type || data.event;
+          setEvents(prev => [...prev, data]);
+        } catch (error) {
+          console.error('Failed to parse WebSocket message', error);
+        }
+      };
+
+      ws.onclose = () => {
+        setConnected(false);
+        if (heartbeatRef.current) {
+          clearInterval(heartbeatRef.current);
+          heartbeatRef.current = null;
+        }
+      };
+
+      ws.onerror = () => {
+        if (!fallbackAttempted) {
+          fallbackAttempted = true;
+          ws?.close();
+          console.warn("WebSocket primary path failed. Gracefully falling back to base generic path.");
+          connectWS(baseUrl);
+        }
+      };
     };
 
-    ws.onclose = () => {
-      setIsConnected(false);
-    };
+    connectWS(`${baseUrl}/ws/runs/${runId}`);
 
     return () => {
-      // Clean up the connection on unmount
-      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-        ws.close();
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
+      if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+        wsRef.current.close();
       }
       wsRef.current = null;
     };
-  }, [runId]);
+  }, [runId, enabled]);
 
-  return { lastEvent, isConnected };
+  return { events, connected };
 };

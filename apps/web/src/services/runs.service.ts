@@ -6,7 +6,7 @@ export const runsService = {
     return api.get('/runs', { params });
   },
   
-  createRun: (data: { url: string; mode: string }): Promise<Run & { runId?: string }> => {
+  createRun: (data: { url: string; mode: string; prevRunId?: string }): Promise<Run & { runId?: string }> => {
     return api.post('/runs', data);
   },
   
@@ -26,9 +26,9 @@ export const runsService = {
     return api.get('/runs/active');
   },
   
-  getRunDiff: (currentRunId: string, previousRunId: string): Promise<RunDiff> => {
+  getRunDiff: (currentRunId: string, options?: { previousRunId?: string; compareWith?: string }): Promise<RunDiff> => {
     return api.get(`/runs/${currentRunId}/diff`, {
-      params: { previous: previousRunId }
+      params: { previous: options?.compareWith || options?.previousRunId }
     });
   }
 };

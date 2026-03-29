@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Target, ChevronRight } from "lucide-react";
@@ -29,6 +29,7 @@ export default function RunDetailPage() {
   const [isLoadingRun, setIsLoadingRun] = useState(true);
   const [agents, setAgents] = useState<AgentInfo[]>([]);
   const [diffData, setDiffData] = useState<RunDiff | null>(null);
+  const [compareId, setCompareId] = useState("");
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
   // Findings State
@@ -43,8 +44,9 @@ export default function RunDetailPage() {
   const [activeFinding, setActiveFinding] = useState<Finding | null>(null);
 
   // Hooks
-  const { lastEvent, isConnected } = useRunSocket(runId);
-  const { status: polledStatus } = usePolling(runId, run?.status);
+  const isLive = run?.status === 'queued' || run?.status === 'running';
+  const { events, connected: wsConnected } = useRunSocket(runId, isLive);
+  const { status: polledStatus } = usePolling(runId, !wsConnected && isLive);
 
   // 1. Initial Load (Run + Agents)
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function RunDetailPage() {
       setAgents(aData || []);
       
       if (rData?.prevRunId) {
-        runsService.getRunDiff(rData.runId, rData.prevRunId)
+        runsService.getRunDiff(rData.runId, { previousRunId: rData.prevRunId })
           .then(setDiffData)
           .catch(console.error);
       }
@@ -87,47 +89,92 @@ export default function RunDetailPage() {
   }, [runId, findingsPage, sevFilter]);
 
   // 3. Socket Event Handling
+  const processedEventsCount = useRef(0);
+  
   useEffect(() => {
-    if (!lastEvent) return;
-    
-    if (lastEvent.type === 'agent_started') {
-      setAgents(prev => prev.map(a => 
-        a.type === lastEvent.payload?.agent ? { ...a, status: 'running' } : a
-      ));
-    } 
-    else if (lastEvent.type === 'agent_completed') {
-      setAgents(prev => prev.map(a => 
-        a.type === lastEvent.payload?.agent 
-          ? { ...a, status: 'complete', durationMs: lastEvent.payload?.durationMs, score: lastEvent.payload?.score } 
-          : a
-      ));
-    } 
-    else if (lastEvent.type === 'score_updated') {
-      setRun(prev => prev ? { ...prev, overallScore: lastEvent.payload?.score } : prev);
-    } 
-    else if (lastEvent.type === 'run.complete' || lastEvent.type === 'run.failed') {
-      runsService.getRunById(runId).then(r => {
-        setRun(r);
-        if (r.prevRunId) {
-          runsService.getRunDiff(r.runId, r.prevRunId).then(setDiffData).catch(console.error);
-        }
-      });
-      agentsService.getRunAgents(runId).then(setAgents);
-    } 
-    else if (lastEvent.type === 'node.log') {
-      setLogs(prev => [...prev, lastEvent.payload as LogEntry]);
-    }
-  }, [lastEvent, runId]);
+    if (!events.length) return;
+    const newEvents = events.slice(processedEventsCount.current);
+    if (!newEvents.length) return;
 
-  // 4. Polling Fallback Action
-  useEffect(() => {
-    if (!isConnected && (polledStatus === 'complete' || polledStatus === 'failed')) {
-      if (run?.status === 'queued' || run?.status === 'running') {
-        runsService.getRunById(runId).then(setRun);
+    newEvents.forEach(ev => {
+      const eventType = ev.type || ev.event;
+      if (eventType === 'agent_started' || eventType === 'node.started') {
+        const agentName = ev.agent || (ev.node ? ev.node.replace(/_agent$/, '') : '');
+        setAgents(prev => prev.map(a => a.type === agentName ? { ...a, status: 'running' } : a));
+      } 
+      else if (eventType === 'agent_completed' || eventType === 'node.complete') {
+        const agentName = ev.agent || (ev.node ? ev.node.replace(/_agent$/, '') : '');
+        setAgents(prev => prev.map(a => 
+          a.type === agentName ? { ...a, status: 'complete', durationMs: ev.durationMs, score: ev.score } : a
+        ));
+      } 
+      else if (eventType === 'node.failed') {
+        const agentName = (ev.node || '').replace(/_agent$/, '');
+        setAgents(prev => prev.map(a => a.type === agentName ? { ...a, status: 'failed' } : a));
+      }
+      else if (eventType === 'score_updated') {
+        setRun(prev => prev ? { ...prev, overallScore: ev.meta?.score } : prev);
+        
+        setAgents(prev => {
+          if (prev.filter(a => a.status === 'complete').length === 4) {
+            runsService.getRunById(runId).then(r => {
+              setRun(r);
+              if (r.prevRunId) runsService.getRunDiff(r.runId, { previousRunId: r.prevRunId }).then(setDiffData).catch(console.error);
+            });
+          }
+          return prev;
+        });
+      } 
+      else if (eventType === 'log' || eventType === 'node.log') {
+        const entry: LogEntry = {
+          agent: ev.agent || (ev.node || '').replace(/_agent$/, ''),
+          message: ev.message || ev.text || '',
+          timestamp: new Date(ev.timestamp || Date.now()).getTime()
+        };
+        setLogs(prev => [...prev.slice(-199), entry]);
+      }
+      else if (eventType === 'finding.created') {
+        if (ev.finding) {
+          setFindings(prev => {
+            if (prev.find(f => f.id === ev.finding.id)) return prev;
+            return [...prev, ev.finding];
+          });
+        }
+      }
+      else if (eventType === 'run.started') {
+        setRun(prev => prev ? { ...prev, status: 'running' } : prev);
+      }
+      else if (eventType === 'run.complete' || eventType === 'run.failed') {
+        runsService.getRunById(runId).then(r => {
+          setRun(r);
+          if (r.prevRunId) runsService.getRunDiff(r.runId, { previousRunId: r.prevRunId }).then(setDiffData).catch(console.error);
+        });
         agentsService.getRunAgents(runId).then(setAgents);
       }
+    });
+
+    processedEventsCount.current = events.length;
+  }, [events, runId]);
+
+  // 4. Polling & Completion Flow
+  useEffect(() => {
+    if (polledStatus && polledStatus !== run?.status && (polledStatus === 'complete' || polledStatus === 'failed')) {
+      runsService.getRunById(runId).then(r => {
+        setRun(r);
+        if (r.prevRunId) runsService.getRunDiff(r.runId, { previousRunId: r.prevRunId }).then(setDiffData).catch(console.error);
+      });
+      agentsService.getRunAgents(runId).then(setAgents);
     }
-  }, [polledStatus, isConnected, run?.status, runId]);
+  }, [polledStatus, run?.status, runId]);
+
+  useEffect(() => {
+    if (run?.status === 'complete' || run?.status === 'failed') {
+      runsService.getRunById(runId).then(r => {
+        setRun(prev => (prev?.status !== r.status || prev?.overallScore !== r.overallScore) ? r : prev);
+      });
+      agentsService.getRunAgents(runId).then(setAgents);
+    }
+  }, [run?.status, runId]);
 
   // Action Handlers
   const handleCancel = () => {
@@ -161,7 +208,8 @@ export default function RunDetailPage() {
     );
   }
 
-  const isLive = run.status === 'queued' || run.status === 'running';
+  // isLive re-assigned natively from scope, used to conditionally display LiveLogFeed structurally
+  const localIsLive = run.status === 'queued' || run.status === 'running';
 
   return (
     <>
@@ -253,11 +301,28 @@ export default function RunDetailPage() {
             <FindingsCharts findings={findings} agents={agents} />
           </div>
 
-          {diffData && (
-            <DiffPanel diff={diffData} />
-          )}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-end gap-2">
+              <input 
+                type="text" 
+                value={compareId}
+                onChange={(e) => setCompareId(e.target.value)}
+                placeholder="Compare Run ID..."
+                className="px-3 py-1.5 text-sm border font-medium outline-none transition-all focus:border-blue-500"
+                style={{ borderColor: "#E2E8F0", borderRadius: 10, minWidth: 180, color: "#0F172A", height: 36 }}
+              />
+              <button 
+                onClick={() => { if (compareId) runsService.getRunDiff(runId, { compareWith: compareId }).then(setDiffData).catch(console.error); }}
+                className="px-4 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-95"
+                style={{ background: "#2563EB", borderRadius: 10, height: 36 }}
+              >
+                Compare
+              </button>
+            </div>
+            {diffData && <DiffPanel diff={diffData} />}
+          </div>
 
-          {isLive && (
+          {localIsLive && (
             <LiveLogFeed logs={logs} />
           )}
 

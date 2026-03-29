@@ -200,7 +200,12 @@ export default function DashboardPage() {
         setIsSubmitting(true);
         setSubmitError(null);
         try {
-            const data = await runsService.createRun({ url, mode: 'manual' });
+            const prevRun = runs.find(r => r.url === url && r.status === 'complete');
+            const data = await runsService.createRun({ 
+                url, 
+                mode: 'manual',
+                prevRunId: prevRun?.runId || prevRun?.id
+            });
             const id = data.runId || data.id;
             if (id) router.push(`/runs/${id}`);
             else throw new Error("No Run ID returned");
