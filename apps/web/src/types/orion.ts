@@ -24,6 +24,7 @@ export interface Run {
   durationMs?: number;
   findings?: number;
   prevRunId?: string;
+  mode?: 'manual' | 'ci' | 'api';
 }
 
 export interface Finding {
@@ -68,4 +69,20 @@ export interface PaginatedResponse<T> {
   page: number;
   limit?: number;
   total?: number;
+}
+
+export interface Repo {
+  id: string;
+  owner: string;
+  repo: string;
+  installationId: string;
+  stagingUrl: string;
+  createdAt: string;
+  lastRun: {
+    runId: string;
+    status: RunStatus;
+    overallScore: number | null;
+    passed: boolean | null;
+    createdAt: string;
+  } | null;
 }
