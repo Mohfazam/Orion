@@ -8,6 +8,7 @@ import {
     XCircle,
     Activity,
     ChevronRight,
+    ArrowRight,
     Clock,
     TrendingUp,
     Target,
@@ -22,6 +23,8 @@ import {
     ResponsiveContainer,
     Tooltip,
     TooltipProps,
+    LineChart,
+    Line,
 } from "recharts";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -76,174 +79,15 @@ const FontStyle = () => (
   `}</style>
 );
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-type Status = "complete" | "running" | "queued" | "failed";
-
-const STATS = { total: 24, passed: 17, failed: 7, avgScore: 78 };
-const PIE_DATA = [{ name: "Passed", value: 17 }, { name: "Failed", value: 7 }];
-
-const FILTERS = ["All", "Complete", "Running", "Queued", "Failed"] as const;
-type FilterType = (typeof FILTERS)[number];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatDuration(ms?: number | null): string | null {
-    if (!ms) return null;
-    const s = Math.floor(ms / 1000);
-    return `${Math.floor(s / 60)}m ${s % 60}s`;
-}
-
-function getScoreStyle(score: number | null | undefined): { bg: string; text: string; border: string } {
-    if (score === null || score === undefined) return { bg: "#F8FAFC", text: "#94A3B8", border: "#E2E8F0" };
-    if (score >= 80) return { bg: "#ECFDF5", text: "#059669", border: "#A7F3D0" };
-    if (score >= 60) return { bg: "#FFFBEB", text: "#D97706", border: "#FDE68A" };
-    return { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" };
-}
-
-const STATUS_MAP: Record<Status, { label: string; bg: string; text: string; dot: string }> = {
-    complete: { label: "Complete", bg: "#EFF6FF", text: "#1D4ED8", dot: "#3B82F6" },
-    running: { label: "Running", bg: "#F5F3FF", text: "#7C3AED", dot: "#8B5CF6" },
-    queued: { label: "Queued", bg: "#F8FAFC", text: "#64748B", dot: "#94A3B8" },
-    failed: { label: "Failed", bg: "#FEF2F2", text: "#DC2626", dot: "#EF4444" },
-};
-
-// ─── Animations ───────────────────────────────────────────────────────────────
-
-const fadeUp = {
-    hidden: { opacity: 0, y: 18 },
-    visible: (i: number) => ({
-        opacity: 1, y: 0,
-        transition: { delay: i * 0.09, duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
-    }),
-};
-
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
-
-// ─── Subcomponents ────────────────────────────────────────────────────────────
-
-// @ts-ignore
-function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
-    if (!active || !payload?.length) return null;
-    return (
-        <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 10, padding: "6px 12px", fontSize: 12, fontWeight: 500, color: "#334155", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
-            {payload[0].name}: <strong>{payload[0].value}</strong>
-        </div>
-    );
-}
-
-function ScoreRing({ score }: { score: number | null | undefined }) {
-    const s = getScoreStyle(score ?? null);
-    return (
-        <div
-            className="score-ring"
-            style={{ background: s.bg, color: s.text, border: `1.5px solid ${s.border}` }}
-        >
-            {score ?? "—"}
-        </div>
-    );
-}
-
-function StatusBadge({ status }: { status: Status }) {
-    const s = STATUS_MAP[status];
-    return (
-        <span
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-            style={{ background: s.bg, color: s.text }}
-        >
-            {status === "running" ? (
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: s.dot }} />
-            ) : (
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
-            )}
-            {s.label}
-        </span>
-    );
-}
-
-function PassFailBadge({ passed }: { passed: boolean | null | undefined }) {
-    if (passed === null || passed === undefined) return <span style={{ color: "#CBD5E1", fontSize: 14, fontWeight: 600 }}>—</span>;
-    return passed ? (
-        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "#ECFDF5", color: "#059669" }}>
-            <CheckCircle2 size={11} /> Pass
-        </span>
-    ) : (
-        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "#FEF2F2", color: "#DC2626" }}>
-            <XCircle size={11} /> Fail
-        </span>
-    );
-}
-
-function EmptyState({ filter }: { filter: string }) {
-    return (
-        <div className="flex flex-col items-center justify-center py-24 text-center px-6">
-            <div
-                className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5"
-                style={{ background: "#F0F5FF", border: "1.5px solid #DBEAFE" }}
-            >
-                <Activity size={28} style={{ color: "#BFDBFE" }} />
-            </div>
-            <p className="font-semibold text-slate-700 text-base">
-                No {filter !== "All" ? filter.toLowerCase() : ""} runs yet
-            </p>
-            <p className="text-slate-400 text-sm mt-1.5 max-w-xs leading-relaxed">
-                Paste any public URL in the search bar above to kick off your first audit.
-            </p>
-            <button
-                className="mt-6 flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
-                style={{ background: "#EFF6FF", color: "#1D4ED8", border: "1px solid #DBEAFE" }}
-            >
-                <Play size={13} className="fill-current" /> Start your first audit
-            </button>
-        </div>
-    );
-}
-
-// ─── Stat Card ────────────────────────────────────────────────────────────────
-
-interface StatCardProps {
-    label: string;
-    value: string | number;
-    sub: string;
-    subColor?: string;
-    icon: React.ReactNode;
-    accent: string;
-    delay: number;
-}
-
-function StatCard({ label, value, sub, subColor = "#94A3B8", icon, accent, delay }: StatCardProps) {
-    return (
-        <motion.div
-            variants={fadeUp}
-            custom={delay}
-            className="bg-white rounded-2xl p-5 flex flex-col gap-3"
-            style={{ border: "1px solid #F1F5F9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
-        >
-            <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#94A3B8" }}>
-                    {label}
-                </span>
-                <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: accent + "18" }}
-                >
-                    <span style={{ color: accent }}>{icon}</span>
-                </div>
-            </div>
-            <div>
-                <div className="bricolage text-[2rem] font-extrabold leading-none" style={{ color: accent === "#2563EB" ? "#0F172A" : accent }}>
-                    {value}
-                </div>
-                <div className="text-xs mt-1.5 font-medium" style={{ color: subColor }}>
-                    {sub}
-                </div>
-            </div>
-        </motion.div>
-    );
-}
+import { FilterType, CustomTooltip, fadeUp, stagger } from "./_components/shared";
+import { NavBar } from "./_components/NavBar";
+import { LastRunBanner } from "./_components/LastRunBanner";
+import { StatCard } from "./_components/StatCard";
+import { ScoreTrendCard } from "./_components/ScoreTrendCard";
+import { TopUrlsStrip } from "./_components/TopUrlsStrip";
+import { RunsTable } from "./_components/RunsTable";
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-
 export default function DashboardPage() {
     const router = useRouter();
     const [filter, setFilter] = useState<FilterType>("All");
@@ -263,6 +107,65 @@ export default function DashboardPage() {
 
     const { activeRuns } = useActiveRuns();
     const activeCount = activeRuns?.length || 0;
+
+    const [overviewStats, setOverviewStats] = useState({ total: 0, passed: 0, failed: 0 });
+    const [topUrls, setTopUrls] = useState<{ url: string; count: number }[]>([]);
+    const [scoreTrend, setScoreTrend] = useState<{ date: string; score: number }[]>([]);
+    const [lastRun, setLastRun] = useState<Run | null>(null);
+    const [isLoadingOverview, setIsLoadingOverview] = useState(true);
+
+    useEffect(() => {
+        let isMounted = true;
+        const fetchOverviewData = async () => {
+            try {
+                const [totalRes, passedRes, failedRes, historyRes] = await Promise.all([
+                    runsService.getRuns({ limit: 1, order: 'desc' }),
+                    runsService.getRuns({ limit: 1, passed: true }),
+                    runsService.getRuns({ limit: 1, passed: false }),
+                    runsService.getRuns({ limit: 100, order: 'desc' })
+                ]);
+                
+                if (isMounted) {
+                    setOverviewStats({
+                        total: totalRes.total || totalRes.data?.length || 0,
+                        passed: passedRes.total || passedRes.data?.length || 0,
+                        failed: failedRes.total || failedRes.data?.length || 0
+                    });
+
+                    const allRuns = historyRes.data || [];
+                    const urlCounts = allRuns.reduce((acc, r) => {
+                        acc[r.url] = (acc[r.url] || 0) + 1;
+                        return acc;
+                    }, {} as Record<string, number>);
+                    
+                    const sortedUrls = Object.entries(urlCounts)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([url, count]) => ({ url, count }));
+                    setTopUrls(sortedUrls);
+
+                    const scoredRuns = allRuns.filter(r => r.overallScore !== null && r.overallScore !== undefined)
+                        .slice(0, 10)
+                        .reverse();
+                    
+                    setScoreTrend(scoredRuns.map(r => ({
+                        date: new Date(r.createdAt || Date.now()).toLocaleDateString(),
+                        score: r.overallScore!
+                    })));
+
+                    if (allRuns.length > 0) {
+                        setLastRun(allRuns[0] || null);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch overview data", err);
+            } finally {
+                if (isMounted) setIsLoadingOverview(false);
+            }
+        };
+        fetchOverviewData();
+        return () => { isMounted = false; };
+    }, []);
 
     useEffect(() => {
         let isMounted = true;
@@ -325,76 +228,7 @@ export default function DashboardPage() {
             <div className="min-h-screen" style={{ background: "#F7F9FF" }}>
 
                 {/* ─── NAV ──────────────────────────────────────── */}
-                <nav
-                    className="sticky top-0 z-50 flex items-center justify-between px-6 py-3.5"
-                    style={{
-                        background: "rgba(255,255,255,0.85)",
-                        backdropFilter: "blur(16px)",
-                        WebkitBackdropFilter: "blur(16px)",
-                        borderBottom: "1px solid #EFF3FB",
-                    }}
-                >
-                    {/* Logo */}
-                    <div className="flex items-center gap-2.5">
-                        <div
-                            className="w-8 h-8 rounded-xl flex items-center justify-center"
-                            style={{ background: "#2563EB" }}
-                        >
-                            <Target size={15} style={{ color: "#fff" }} />
-                        </div>
-                        <span className="bricolage font-bold text-xl tracking-tight" style={{ color: "#0F172A" }}>
-                            Orion
-                        </span>
-                        <span
-                            className="text-xs font-semibold px-2 py-0.5 rounded-full ml-1"
-                            style={{ background: "#EFF6FF", color: "#3B82F6", border: "1px solid #DBEAFE" }}
-                        >
-                            Beta
-                        </span>
-                    </div>
-
-                    {/* Center nav */}
-                    <div className="hidden md:flex items-center gap-6 text-sm font-medium" style={{ color: "#64748B" }}>
-                        {["Dashboard", "Integrations", "Docs"].map((item, i) => (
-                            <button
-                                key={item}
-                                className="transition-colors hover:text-slate-900"
-                                style={i === 0 ? { color: "#1D4ED8", fontWeight: 600 } : {}}
-                            >
-                                {item}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Right */}
-                    <div className="flex items-center gap-3">
-                        {/* Live badge */}
-                        <div
-                            className="hidden sm:flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full"
-                            style={{
-                                background: activeCount > 0 ? "#F0FDF4" : "#F8FAFC",
-                                color: activeCount > 0 ? "#16A34A" : "#64748B",
-                                border: activeCount > 0 ? "1px solid #BBF7D0" : "1px solid #E2E8F0"
-                            }}
-                        >
-                            {activeCount > 0 && (
-                                <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: "#22C55E" }} />
-                                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#22C55E" }} />
-                                </span>
-                            )}
-                            {activeCount > 0 ? `${activeCount} active` : "0 idle"}
-                        </div>
-
-                        {/* Avatar */}
-                        <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                            style={{ background: "linear-gradient(135deg, #3B82F6, #1D4ED8)" }}
-                        >
-                            T
-                        </div>
-                    </div>
-                </nav>
+                <NavBar activeCount={activeCount} />
 
                 {/* ─── HERO ─────────────────────────────────────── */}
                 <section className="relative overflow-hidden bg-white" style={{ borderBottom: "1px solid #EFF3FB" }}>
@@ -588,6 +422,9 @@ export default function DashboardPage() {
                 {/* ─── MAIN CONTENT ─────────────────────────────── */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-6">
 
+                    {/* LAST RUN BANNER */}
+                    <LastRunBanner isLoading={isLoadingOverview} lastRun={lastRun} />
+
                     {/* ─── STATS BAR ──────────────────────────────── */}
                     <motion.div
                         variants={stagger}
@@ -598,7 +435,7 @@ export default function DashboardPage() {
                         <StatCard
                             delay={0}
                             label="Total Runs"
-                            value={STATS.total}
+                            value={isLoadingOverview ? "—" : overviewStats.total}
                             sub="All time"
                             accent="#2563EB"
                             icon={<BarChart3 size={15} />}
@@ -606,8 +443,8 @@ export default function DashboardPage() {
                         <StatCard
                             delay={1}
                             label="Passed"
-                            value={STATS.passed}
-                            sub={`${Math.round((STATS.passed / STATS.total) * 100)}% pass rate`}
+                            value={isLoadingOverview ? "—" : overviewStats.passed}
+                            sub={isLoadingOverview || overviewStats.total === 0 ? "—" : `${Math.round((overviewStats.passed / overviewStats.total) * 100)}% pass rate`}
                             accent="#059669"
                             subColor="#10B981"
                             icon={<CheckCircle2 size={15} />}
@@ -615,21 +452,14 @@ export default function DashboardPage() {
                         <StatCard
                             delay={2}
                             label="Failed"
-                            value={STATS.failed}
-                            sub={`${Math.round((STATS.failed / STATS.total) * 100)}% fail rate`}
+                            value={isLoadingOverview ? "—" : overviewStats.failed}
+                            sub={isLoadingOverview || overviewStats.total === 0 ? "—" : `${Math.round((overviewStats.failed / overviewStats.total) * 100)}% fail rate`}
                             accent="#DC2626"
                             subColor="#EF4444"
                             icon={<XCircle size={15} />}
                         />
-                        <StatCard
-                            delay={3}
-                            label="Avg Score"
-                            value={STATS.avgScore}
-                            sub="out of 100"
-                            accent="#D97706"
-                            subColor="#F59E0B"
-                            icon={<TrendingUp size={15} />}
-                        />
+
+                        <ScoreTrendCard isLoading={isLoadingOverview} scoreTrend={scoreTrend} delay={3} />
 
                         {/* Donut chart card */}
                         <motion.div
@@ -642,274 +472,61 @@ export default function DashboardPage() {
                                 Pass / Fail
                             </span>
                             <div style={{ height: 80, marginTop: 4 }}>
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={PIE_DATA}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={24}
-                                            outerRadius={36}
-                                            paddingAngle={4}
-                                            dataKey="value"
-                                            startAngle={90}
-                                            endAngle={-270}
-                                            stroke="none"
-                                        >
-                                            <Cell fill="#10B981" />
-                                            <Cell fill="#EF4444" />
-                                        </Pie>
-                                        <Tooltip content={<CustomTooltip />} />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                                {isLoadingOverview ? (
+                                    <div className="w-full h-full shimmer rounded-full border-[12px] border-white" />
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={[{ name: "Passed", value: overviewStats.passed }, { name: "Failed", value: overviewStats.failed }]}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={24}
+                                                outerRadius={36}
+                                                paddingAngle={4}
+                                                dataKey="value"
+                                                startAngle={90}
+                                                endAngle={-270}
+                                                stroke="none"
+                                            >
+                                                <Cell fill="#10B981" />
+                                                <Cell fill="#EF4444" />
+                                            </Pie>
+                                            <Tooltip content={<CustomTooltip />} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                )}
                             </div>
-                            <div className="flex gap-4 mt-1">
+                            <div className="flex justify-center gap-4 mt-1">
                                 <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#64748B" }}>
-                                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#10B981" }} />
-                                    Pass · {STATS.passed}
+                                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "#10B981" }} />
+                                    Pass{!isLoadingOverview && ` · ${overviewStats.passed}`}
                                 </span>
                                 <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#64748B" }}>
-                                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#EF4444" }} />
-                                    Fail · {STATS.failed}
+                                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "#EF4444" }} />
+                                    Fail{!isLoadingOverview && ` · ${overviewStats.failed}`}
                                 </span>
                             </div>
                         </motion.div>
                     </motion.div>
 
+                    {/* ─── MOST AUDITED URLS ────────────────────────────── */}
+                    <TopUrlsStrip isLoading={isLoadingOverview} topUrls={topUrls} onSelectUrl={setUrl} />
+
                     {/* ─── RUN HISTORY ────────────────────────────── */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 24 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.45, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                        className="bg-white rounded-2xl overflow-hidden"
-                        style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
-                    >
-                        {/* Header */}
-                        <div
-                            className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                            style={{ borderBottom: "1px solid #F1F5F9" }}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center"
-                                    style={{ background: "#EFF6FF" }}
-                                >
-                                    <Clock size={16} style={{ color: "#2563EB" }} />
-                                </div>
-                                <div>
-                                    <h2 className="bricolage font-bold text-lg" style={{ color: "#0F172A" }}>
-                                        Run History
-                                    </h2>
-                                    <p className="text-xs mt-0.5" style={{ color: "#94A3B8" }}>
-                                        {runs.length} audits · sorted by recency
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Filter pills */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                                {FILTERS.map((f) => (
-                                    <button
-                                        key={f}
-                                        onClick={() => handleFilterClick(f)}
-                                        className="text-xs font-semibold px-3.5 py-1.5 rounded-full transition-all"
-                                        style={
-                                            filter === f
-                                                ? { background: "#2563EB", color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }
-                                                : { background: "#F8FAFC", color: "#64748B", border: "1px solid #E2E8F0" }
-                                        }
-                                    >
-                                        {f}
-                                        {f !== "All" && (
-                                            <span
-                                                className="ml-1.5 rounded-full px-1 py-0"
-                                                style={{
-                                                    background: filter === f ? "rgba(255,255,255,0.2)" : "#E2E8F0",
-                                                    color: filter === f ? "#fff" : "#94A3B8",
-                                                    fontSize: 10,
-                                                }}
-                                            >
-                                                {f === "Complete" ? 3 : f === "Running" ? 1 : f === "Queued" ? 1 : 1}
-                                            </span>
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Table / Empty State */}
-                        {isLoadingRuns ? (
-                            <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
-                                <Activity size={28} className="animate-spin text-blue-500 mb-5" />
-                                <p className="font-semibold text-slate-700 text-base">Loading history...</p>
-                            </div>
-                        ) : runsError ? (
-                            <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
-                                <AlertTriangle size={28} className="text-red-500 mb-5" />
-                                <p className="font-semibold text-slate-700 text-base">Failed to fetch runs</p>
-                                <p className="text-slate-400 text-sm mt-1.5 max-w-xs">{runsError}</p>
-                            </div>
-                        ) : filtered.length === 0 ? (
-                            <EmptyState filter={filter} />
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                                    <thead>
-                                        <tr style={{ background: "#FAFBFF" }}>
-                                            {["Website", "Status", "Score", "Result", "Findings", "Run At", ""].map((h) => (
-                                                <th
-                                                    key={h}
-                                                    className="text-left"
-                                                    style={{
-                                                        padding: "10px 16px",
-                                                        fontSize: 11,
-                                                        fontWeight: 600,
-                                                        color: "#94A3B8",
-                                                        textTransform: "uppercase",
-                                                        letterSpacing: "0.07em",
-                                                        borderBottom: "1px solid #F1F5F9",
-                                                    }}
-                                                >
-                                                    {h}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filtered.map((run, i) => (
-                                            <motion.tr
-                                                key={run.id}
-                                                initial={{ opacity: 0, x: -12 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: i * 0.06, duration: 0.35, ease: "easeOut" }}
-                                                className="row-hover"
-                                                style={{
-                                                    borderBottom: i < filtered.length - 1 ? "1px solid #F8FAFF" : "none",
-                                                    cursor: "pointer",
-                                                    transition: "background 0.15s ease",
-                                                }}
-                                                onClick={() => router.push(`/runs/${run.runId}`)}
-                                            >
-                                                {/* Website */}
-                                                <td style={{ padding: "16px 16px" }}>
-                                                    <div className="flex items-center gap-3">
-                                                        <div
-                                                            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                                                            style={{ background: "#F0F5FF", border: "1px solid #DBEAFE" }}
-                                                        >
-                                                            <Globe size={15} style={{ color: "#3B82F6" }} />
-                                                        </div>
-                                                        <div>
-                                                            <div
-                                                                className="font-semibold text-sm truncate max-w-[200px]"
-                                                                style={{ color: "#0F172A" }}
-                                                            >
-                                                                {run.url.replace("https://", "").replace("http://", "")}
-                                                            </div>
-                                                            {run.durationMs && (
-                                                                <div
-                                                                    className="flex items-center gap-1 mt-0.5 text-xs"
-                                                                    style={{ color: "#94A3B8" }}
-                                                                >
-                                                                    <Clock size={10} />
-                                                                    {formatDuration(run.durationMs)}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </td>
-
-                                                {/* Status */}
-                                                <td style={{ padding: "16px 16px" }}>
-                                                    <StatusBadge status={run.status as Status} />
-                                                </td>
-
-                                                {/* Score */}
-                                                <td style={{ padding: "16px 16px" }}>
-                                                    <div className="flex items-center gap-2">
-                                                        <ScoreRing score={run.overallScore} />
-                                                        {run.overallScore !== undefined && run.overallScore !== null && (
-                                                            <span className={`text-xs font-semibold ${getScoreColor(run.overallScore)}`}>
-                                                                {getScoreLabel(run.overallScore)}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-
-                                                {/* Pass/Fail */}
-                                                <td style={{ padding: "16px 16px" }}>
-                                                    <PassFailBadge passed={run.passed} />
-                                                </td>
-
-                                                {/* Findings */}
-                                                <td style={{ padding: "16px 16px" }}>
-                                                    {run.findings && run.findings > 0 ? (
-                                                        <span
-                                                            className="flex items-center gap-1 text-xs font-medium"
-                                                            style={{ color: run.findings > 15 ? "#DC2626" : run.findings > 5 ? "#D97706" : "#059669" }}
-                                                        >
-                                                            <AlertTriangle size={11} />
-                                                            {run.findings}
-                                                        </span>
-                                                    ) : (
-                                                        <span style={{ color: "#CBD5E1", fontSize: 13 }}>—</span>
-                                                    )}
-                                                </td>
-
-                                                {/* Run At */}
-                                                <td style={{ padding: "16px 16px" }}>
-                                                    <span className="text-sm" style={{ color: "#94A3B8" }}>
-                                                        {new Date(run.createdAt || Date.now()).toLocaleDateString()}
-                                                    </span>
-                                                </td>
-
-                                                {/* Arrow */}
-                                                <td style={{ padding: "16px 20px 16px 8px" }}>
-                                                    <div
-                                                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                                                        style={{ background: "#F0F5FF" }}
-                                                    >
-                                                        <ChevronRight size={14} style={{ color: "#3B82F6" }} />
-                                                    </div>
-                                                </td>
-                                            </motion.tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-
-                        {/* Table footer */}
-                        {filtered.length > 0 && (
-                            <div
-                                className="px-6 py-3.5 flex items-center justify-between"
-                                style={{ borderTop: "1px solid #F1F5F9", background: "#FAFBFF" }}
-                            >
-                                <span className="text-xs" style={{ color: "#94A3B8" }}>
-                                    Showing {filtered.length} runs on page {page}
-                                </span>
-                                <div className="flex gap-4">
-                                    <button
-                                        disabled={!hasPrev}
-                                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                        className="flex items-center gap-1 text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                        style={{ color: hasPrev ? "#2563EB" : "#94A3B8" }}
-                                    >
-                                        Prev
-                                    </button>
-                                    <button
-                                        disabled={!hasNext}
-                                        onClick={() => setPage((p) => p + 1)}
-                                        className="flex items-center gap-1 text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                        style={{ color: hasNext ? "#2563EB" : "#94A3B8" }}
-                                    >
-                                        Next
-                                        <ChevronRight size={12} />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </motion.div>
+                    <RunsTable 
+                        runs={filtered} 
+                        isLoading={isLoadingRuns} 
+                        error={runsError} 
+                        filter={filter} 
+                        onFilterChange={handleFilterClick} 
+                        page={page} 
+                        hasNext={hasNext} 
+                        hasPrev={hasPrev} 
+                        onPrevPage={() => setPage(p => Math.max(1, p - 1))} 
+                        onNextPage={() => setPage(p => p + 1)} 
+                        totalCount={overviewStats.total} 
+                    />
 
                     {/* ─── QUICK TIPS STRIP ────────────────────────── */}
                     <motion.div

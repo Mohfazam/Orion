@@ -1,0 +1,43 @@
+import { motion } from "framer-motion";
+import { fadeUp } from "./shared";
+
+export interface StatCardProps {
+    label: string;
+    value: string | number;
+    sub: string;
+    subColor?: string;
+    icon: React.ReactNode;
+    accent: string;
+    delay: number;
+}
+
+export function StatCard({ label, value, sub, subColor = "#94A3B8", icon, accent, delay }: StatCardProps) {
+    return (
+        <motion.div
+            variants={fadeUp}
+            custom={delay}
+            className="bg-white rounded-2xl p-5 flex flex-col gap-3"
+            style={{ border: "1px solid #F1F5F9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+        >
+            <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#94A3B8" }}>
+                    {label}
+                </span>
+                <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center"
+                    style={{ background: accent + "18" }}
+                >
+                    <span style={{ color: accent }}>{icon}</span>
+                </div>
+            </div>
+            <div>
+                <div className="bricolage text-[2rem] font-extrabold leading-none" style={{ color: accent === "#2563EB" ? "#0F172A" : accent }}>
+                    {value}
+                </div>
+                <div className="text-xs mt-1.5 font-medium" style={{ color: subColor }}>
+                    {sub}
+                </div>
+            </div>
+        </motion.div>
+    );
+}
