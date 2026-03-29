@@ -160,7 +160,7 @@ export function RunsTable({
                         </thead>
                         <tbody>
                             {runs.map((r, i) => {
-                                const run = r as Run & { mode?: string, failedRules?: number, passedRules?: number };
+                                const run = r as Run & { mode?: string, failedRules?: number, passedRules?: number, completedAt?: string };
                                 return (
                                 <motion.tr
                                     key={run.id || run.runId || `run-row-${i}`}
@@ -219,11 +219,17 @@ export function RunsTable({
                                     <td style={{ padding: "16px 16px" }}>
                                         <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: "#64748B" }}>
                                             {new Date(run.createdAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                            {formatDuration(run.durationMs) && (
-                                                <span className="px-1.5 py-0.5 rounded-md" style={{ background: "#F1F5F9", color: "#64748B" }}>
-                                                    {formatDuration(run.durationMs)}
-                                                </span>
-                                            )}
+                                            {(() => {
+                                                const computedMs = run.durationMs || (run.completedAt && run.createdAt ? (new Date(run.completedAt).getTime() - new Date(run.createdAt).getTime()) : 0);
+                                                if (!computedMs) return null;
+                                                const s = Math.floor(computedMs / 1000);
+                                                const durStr = s < 1 ? "< 1s" : `${Math.floor(s / 60)}m ${s % 60}s`;
+                                                return (
+                                                    <span className="px-1.5 py-0.5 rounded-md" style={{ background: "#F1F5F9", color: "#64748B" }}>
+                                                        {durStr}
+                                                    </span>
+                                                )
+                                            })()}
                                         </div>
                                     </td>
                                     {/* Chevron */}
