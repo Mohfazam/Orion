@@ -129,7 +129,7 @@ export function FindingsTable({
             ) : (
               findings.map((f, i) => (
                 <motion.tr
-                  key={f.id}
+                  key={f.id || `finding-${i}`}
                   className="row-hover"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
