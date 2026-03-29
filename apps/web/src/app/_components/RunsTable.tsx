@@ -139,9 +139,9 @@ export function RunsTable({
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                         <thead>
                             <tr style={{ background: "#FAFBFF" }}>
-                                {["Website", "Status", "Score", "Result", "Findings", "Run At", ""].map((h) => (
+                                {["Website", "Status", "Score", "Result", "Findings", "Run At", ""].map((h, idx) => (
                                     <th
-                                        key={h}
+                                        key={h || `header-col-${idx}`}
                                         className="text-left"
                                         style={{
                                             padding: "10px 16px",
@@ -163,7 +163,7 @@ export function RunsTable({
                                 const run = r as Run & { mode?: string, failedRules?: number, passedRules?: number };
                                 return (
                                 <motion.tr
-                                    key={run.id}
+                                    key={run.id || run.runId || `run-row-${i}`}
                                     initial={{ opacity: 0, x: -12 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: i * 0.06, duration: 0.35, ease: "easeOut" }}

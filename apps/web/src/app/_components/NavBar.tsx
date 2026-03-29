@@ -36,7 +36,7 @@ export function NavBar({ activeCount }: NavBarProps) {
             <div className="hidden md:flex items-center gap-6 text-sm font-medium" style={{ color: "#64748B" }}>
                 {["Dashboard", "", ""].map((item, i) => (
                     <button
-                        key={item}
+                        key={item || `nav-item-${i}`}
                         className="transition-colors hover:text-slate-900"
                         style={i === 0 ? { color: "#1D4ED8", fontWeight: 600 } : {}}
                     >
