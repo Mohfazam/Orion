@@ -8,6 +8,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
+    "@octokit/auth-app": "^8.2.0",
+    "@octokit/rest": "^22.0.1",
     "@repo/db": "workspace:*",
     "@repo/realtime": "workspace:*",
     "drizzle-orm": "^0.45.1",

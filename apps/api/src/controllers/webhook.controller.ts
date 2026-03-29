@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import crypto from "crypto";
-import { db, connectedRepos, runs } from "@repo/db";
-import { eq } from "drizzle-orm";
+import { db, connectedRepos, runs, findings, agentResults, eq } from "@repo/db";
 import { runAgents } from "@repo/agents";
 import { nanoid } from "nanoid";
 import {
   postPendingStatus,
   postCompletedStatus,
   postPRComment,
+  postInlineComments,
 } from "../services/github.service";
 
 // ─── Verify GitHub Signature ──────────────────────────────────────────────────
@@ -91,7 +91,7 @@ export const handleGithubWebhook = async (
 
     const runId = `run_${nanoid(6)}`;
 
-    // ── Insert run into DB first ──────────────────────────────────────────
+    // ── Insert run into DB ────────────────────────────────────────────────
     const [newRun] = await db
       .insert(runs)
       .values({
@@ -119,20 +119,55 @@ export const handleGithubWebhook = async (
     // Trigger run in background — do NOT await
     runAgents(newRun!.runId, newRun!.id, connected.stagingUrl, "ci")
       .then(async () => {
+        // ── Fetch completed run ─────────────────────────────────────────
         const run = await db.query.runs.findFirst({
           where: eq(runs.runId, runId),
         });
 
-        const score         = run?.overallScore ?? 0;
-        const passed        = run?.passed       ?? false;
-        const findingsCount = run?.state
-          ? (run.state as { findings?: unknown[] }).findings?.length ?? 0
-          : 0;
+        const score  = run?.overallScore ?? 0;
+        const passed = run?.passed       ?? false;
 
+        // ── Fetch findings for inline comments ─────────────────────────
+        const runFindings = run
+          ? await db.query.findings.findMany({
+              where: eq(findings.runId, run.id),
+            })
+          : [];
+
+        const findingsCount = runFindings.length;
+
+        // ── Fetch rootCause from scoring agent result ───────────────────
+        let rootCause: string | undefined;
+        if (run) {
+          const scoringResult = await db.query.agentResults.findFirst({
+            where: eq(agentResults.runId, run.id),
+          });
+          const data = scoringResult?.data as { rootCause?: string } | null;
+          rootCause = data?.rootCause ?? undefined;
+        }
+
+        // ── Post to GitHub ──────────────────────────────────────────────
         await postCompletedStatus(owner, repo, sha, installationId, score, passed, runId);
-        await postPRComment(owner, repo, prNumber, installationId, score, passed, runId, findingsCount);
+        await postPRComment(owner, repo, prNumber, installationId, score, passed, runId, findingsCount, rootCause);
 
-        console.log(`[webhook] run ${runId} complete — posted status to GitHub`);
+        if (runFindings.length > 0) {
+          await postInlineComments(
+            owner,
+            repo,
+            prNumber,
+            installationId,
+            sha,
+            runFindings.map((f) => ({
+              ...f,
+              file:          f.file          ?? undefined,
+              line:          f.line          ?? undefined,
+              fixSuggestion: f.fixSuggestion ?? undefined,
+              nodeId:        f.nodeId        ?? undefined,
+            }))
+          );
+        }
+
+        console.log(`[webhook] run ${runId} complete — posted status + comments to GitHub`);
       })
       .catch(async (err) => {
         console.error(`[webhook] run failed:`, err);

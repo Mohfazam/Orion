@@ -18,8 +18,8 @@ export interface PageNode {
 }
 
 export interface OrionState {
-  runId: string;           
-  runUUID: string;         
+  runId: string;
+  runUUID: string;
   url: string;
   mode: RunMode;
   sitemap: PageNode[];
@@ -27,5 +27,14 @@ export interface OrionState {
   overallScore: number;
   passed: boolean;
   currentNode: string;
+  rootCause?: string;
   error?: string;
 }
+
+export type AgentName =
+  | "discovery_agent"
+  | "performance_agent"
+  | "code_review_agent"
+  | "scoring_agent"
+  | "fix_agent"
+  | "visualization_agent";

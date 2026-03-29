@@ -1,15 +1,9 @@
-import { OrionState } from "./types";
+import { OrionState, AgentName } from "./types";
 import { askJSON } from "./llm";
 import { failRun, updateRunNode } from "./db";
 import { logger } from "@repo/realtime";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type AgentName =
-  | "discovery_agent"
-  | "performance_agent"
-  | "scoring_agent"
-  | "visualization_agent";
 
 type AgentFn = (state: OrionState, focus?: string) => Promise<OrionState>;
 
@@ -21,12 +15,14 @@ interface OrchestratorDecision {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const MAX_STEPS = 10;
+const MAX_STEPS = 12;
 const MAX_AGENT_RETRIES = 2;
 const AGENT_ORDER: AgentName[] = [
   "discovery_agent",
   "performance_agent",
+  "code_review_agent",
   "scoring_agent",
+  "fix_agent",
   "visualization_agent",
 ];
 
@@ -34,32 +30,37 @@ const AGENT_ORDER: AgentName[] = [
 
 const SYSTEM_PROMPT = `
 You are the QA Orchestrator for Orion — an autonomous web quality testing platform.
-You manage 4 specialist agents and decide which one runs next based on the current pipeline state.
+You manage 6 specialist agents and decide which one runs next based on the current pipeline state.
 
 AGENTS:
-- discovery_agent    → Crawls the website using a real browser. Maps all pages, finds broken links, analyses content. MUST always run first.
-- performance_agent  → Runs Lighthouse on discovered pages. Measures Core Web Vitals (LCP, CLS, FCP, TBT). Requires discovery_agent to have run first.
-- scoring_agent      → Takes all findings from previous agents, applies weighted scoring formula, produces 0-100 score and pass/fail verdict. Run after all testing agents complete.
-- visualization_agent → Saves final results to DB, marks run complete. MUST always run last.
+- discovery_agent      → Crawls the website using a real browser. Maps all pages, finds broken links, analyses content. MUST always run first.
+- performance_agent    → Runs Lighthouse on discovered pages. Measures Core Web Vitals (LCP, CLS, FCP, TBT). Requires discovery_agent to have run first.
+- code_review_agent    → Reads the actual PR source files from GitHub and reviews them for security issues, bugs, bad practices, and accessibility problems. Generates findings with file and line references for inline PR comments. ONLY runs in CI mode. MUST run after performance_agent and before scoring_agent. If mode is "manual", skip it and go straight to scoring_agent.
+- scoring_agent        → Takes all findings from previous agents, applies weighted scoring formula, produces 0-100 score and pass/fail verdict. Run after all testing agents complete.
+- fix_agent            → ONLY runs if mode is "ci" AND currentScore < 95. Reads changed PR files, generates AI fixes, commits them back to the PR branch. If mode is "manual" OR currentScore >= 95, skip it and go straight to visualization_agent.
+- visualization_agent  → Saves final results to DB, marks run complete. MUST always run last.
 
 RULES:
 1. discovery_agent MUST run first — always.
 2. performance_agent MUST run after discovery_agent.
-3. scoring_agent MUST run after all testing is done.
-4. visualization_agent MUST run last — only after scoring_agent.
-5. NEVER suggest an agent that is already in completedAgents — they cannot run again.
-6. ALWAYS check remainingAgents — only pick from that list.
-7. If remainingAgents is empty, respond with END.
-8. If a critical agent failed twice, skip it and continue with the next remaining agent.
-9. If discovery found 0 pages, skip performance_agent and go straight to scoring_agent.
+3. code_review_agent MUST run after performance_agent — but ONLY if mode is "ci". If mode is "manual", skip it entirely.
+4. scoring_agent MUST run after performance_agent and code_review_agent (if applicable).
+5. fix_agent runs after scoring_agent — ONLY if mode is "ci" AND currentScore < 95. Otherwise skip it and go to visualization_agent.
+6. visualization_agent MUST run last — only after scoring_agent (and fix_agent if it ran).
+7. NEVER suggest an agent that is already in completedAgents — they cannot run again.
+8. ALWAYS check remainingAgents — only pick from that list.
+9. If remainingAgents is empty, respond with END.
+10. If a critical agent failed twice, skip it and continue with the next remaining agent.
+11. If discovery found 0 pages, skip performance_agent and go straight to code_review_agent (if CI) or scoring_agent (if manual).
 
 You will receive the current pipeline state as JSON containing:
 - completedAgents: agents that have already run — DO NOT suggest these
 - remainingAgents: agents still to run — ONLY pick from these
 - failedAgents: agents that failed and their attempt count
+- mode: "manual" or "ci" — CRITICAL for deciding whether to run code_review_agent and fix_agent
 - pagesDiscovered: number of pages found by discovery
 - findingsCount: total findings so far
-- currentScore: current overall score
+- currentScore: current overall score (0 before scoring runs)
 - error: any error from the last agent
 
 Respond ONLY with valid JSON in this exact shape:
@@ -82,12 +83,13 @@ const buildStateContext = (
   );
 
   return JSON.stringify({
-    url: state.url,
+    url:            state.url,
+    mode:           state.mode,
     completedAgents,
     remainingAgents,
     failedAgents,
     pagesDiscovered: state.sitemap.length,
-    findingsCount: state.findings.length,
+    findingsCount:   state.findings.length,
     findingsBySeverity: {
       critical: state.findings.filter((f) => f.severity === "critical").length,
       high:     state.findings.filter((f) => f.severity === "high").length,
@@ -95,7 +97,7 @@ const buildStateContext = (
       low:      state.findings.filter((f) => f.severity === "low").length,
     },
     currentScore: state.overallScore,
-    error: state.error ?? null,
+    error:        state.error ?? null,
   });
 };
 
@@ -157,13 +159,13 @@ export const runOrchestrated = async (
       break;
     }
 
-    // ── agentName declared HERE — all logger calls using it must be below ─
     const agentName = decision.next as AgentName;
-    const agentFn = agents[agentName];
+    const agentFn   = agents[agentName];
 
     // ── Hard guard — unknown agent ────────────────────────────────────────
     if (!agentFn) {
       console.error(`[orchestrator] unknown agent '${agentName}' — skipping`);
+      completedAgents.push(agentName); // mark done so LLM doesn't loop
       continue;
     }
 
