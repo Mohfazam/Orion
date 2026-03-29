@@ -19,10 +19,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@repo/realtime": "workspace:*",
+    "@octokit/auth-app": "^8.2.0",
+    "@octokit/rest": "^22.0.1",
     "@repo/agents": "workspace:*",
     "@repo/db": "workspace:*",
+    "@repo/realtime": "workspace:*",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "cors": "^2.8.6",
     "drizzle-orm": "^0.45.1",
     "express": "^5.2.1",
     "nanoid": "^5.1.7"
