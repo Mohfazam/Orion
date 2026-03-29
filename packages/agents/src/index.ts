@@ -3,8 +3,11 @@ import { discoveryAgent } from "./nodes/discovery";
 import { performanceAgent } from "./nodes/performance";
 import { scoringAgent } from "./nodes/scoring";
 import { visualizationAgent } from "./nodes/visualization";
+import { codeReviewAgent } from "./nodes/codeReview";
+import { fixAgent } from "./nodes/fix";           // ← add
 import { OrionState, RunMode } from "./types";
 import { failRun } from "./db";
+
 
 export const runAgents = async (
   runId: string,
@@ -28,7 +31,9 @@ export const runAgents = async (
     await runOrchestrated(initialState, {
       discovery_agent:     discoveryAgent,
       performance_agent:   performanceAgent,
+      code_review_agent:   codeReviewAgent,
       scoring_agent:       scoringAgent,
+      fix_agent:           fixAgent,             // ← add
       visualization_agent: visualizationAgent,
     });
   } catch (err) {
