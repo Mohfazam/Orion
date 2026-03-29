@@ -85,4 +85,5 @@ export interface Repo {
     passed: boolean | null;
     createdAt: string;
   } | null;
+  runs?: Run[];
 }
