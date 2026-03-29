@@ -1,16 +1,15 @@
-import { clients, broadcast } from "./socket";
-import { RealtimeEvent, EventType } from "./types";
 import { WebSocket } from "ws";
+import { clients, broadcast } from "./socket";
+import { RealtimeEvent, AgentName, LogMeta } from "./types";
+
+// ─── Internal Helpers ─────────────────────────────────────────────────────────
 
 function serialize(args: unknown[]): string {
   return args
     .map((arg) => {
       if (typeof arg === "string") return arg;
-      try {
-        return JSON.stringify(arg);
-      } catch {
-        return String(arg);
-      }
+      try { return JSON.stringify(arg); }
+      catch { return String(arg); }
     })
     .join(" ");
 }
@@ -21,9 +20,9 @@ function emit(event: RealtimeEvent): void {
 }
 
 function makeEvent(
-  type: EventType,
+  type: RealtimeEvent["type"],
   runId: string,
-  agent: string,
+  agent: AgentName | string,
   overrides: Partial<RealtimeEvent> = {}
 ): RealtimeEvent {
   return {
@@ -35,24 +34,31 @@ function makeEvent(
   };
 }
 
+// ─── Structured Logger ────────────────────────────────────────────────────────
+
 export const logger = {
-  info(runId: string, agent: string, ...args: unknown[]): void {
-    const message = serialize(args);
-    emit(makeEvent("log", runId, agent, { message }));
+  info(runId: string, agent: AgentName | string, message: string, meta?: LogMeta): void {
+    console.log(`[${agent}] ${message}`, meta ?? "");
+    emit(makeEvent("log", runId, agent, { message, meta }));
   },
 
-  agentStarted(runId: string, agent: string): void {
+  agentStarted(runId: string, agent: AgentName | string): void {
+    console.log(`[${agent}] started`);
     emit(makeEvent("agent_started", runId, agent, { status: "running" }));
   },
 
-  agentCompleted(runId: string, agent: string): void {
+  agentCompleted(runId: string, agent: AgentName | string): void {
+    console.log(`[${agent}] completed`);
     emit(makeEvent("agent_completed", runId, agent, { status: "complete" }));
   },
 
   scoreUpdated(runId: string, score: number): void {
-    emit(makeEvent("score_updated", runId, "system", { score }));
+    console.log(`[scoring] score updated → ${score}`);
+    emit(makeEvent("score_updated", runId, "scoring", { meta: { score } }));
   },
 };
+
+// ─── console.log Fallback (backward compat) ───────────────────────────────────
 
 export function initLogger(): void {
   const originalLog = console.log.bind(console);
@@ -60,7 +66,8 @@ export function initLogger(): void {
   console.log = (...args: unknown[]): void => {
     originalLog(...args);
 
-    // Backward compatible global broadcast with no runId
+    if (clients.size === 0) return;
+
     const event: RealtimeEvent = {
       type: "log",
       runId: "global",
@@ -68,8 +75,6 @@ export function initLogger(): void {
       message: serialize(args),
       timestamp: new Date().toISOString(),
     };
-
-    if (clients.size === 0) return;
 
     const data = JSON.stringify(event);
     for (const client of clients) {
