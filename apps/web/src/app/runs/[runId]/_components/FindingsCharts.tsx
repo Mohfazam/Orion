@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Cpu, PieChart as PieIcon } from "lucide-react";
+import { Cpu, PieChart as PieIcon, BarChart as BarIcon } from "lucide-react";
 import {
   PieChart,
   Pie,
@@ -14,16 +14,16 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import { Finding, AgentInfo } from "../../../../types/orion";
+import { Finding, AgentInfo, Run } from "../../../../types/orion";
 import { ChartTooltip } from "./shared";
-import { SEV } from "./FindingDrawer";
 
 export interface FindingsChartsProps {
   findings: Finding[];
   agents: AgentInfo[];
+  run?: Run;
 }
 
-export function FindingsCharts({ findings, agents }: FindingsChartsProps) {
+export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
   const agentBreakdown = agents.map((agent) => {
     const fills = {
       discovery: "#2563EB",
@@ -39,14 +39,24 @@ export function FindingsCharts({ findings, agents }: FindingsChartsProps) {
   });
 
   const svMap = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
-  findings.forEach(f => { if (svMap[f.severity] !== undefined) svMap[f.severity]++ });
-  
+  if (run?.summary?.bySeverity) {
+    svMap.critical = run.summary.bySeverity.critical || 0;
+    svMap.high     = run.summary.bySeverity.high || 0;
+    svMap.medium   = run.summary.bySeverity.medium || 0;
+    svMap.low      = run.summary.bySeverity.low || 0;
+    svMap.info     = run.summary.bySeverity.info || 0;
+  } else {
+    findings.forEach(f => { if (svMap[f.severity] !== undefined) svMap[f.severity]++ });
+  }
+
+  const totalFindings = svMap.critical + svMap.high + svMap.medium + svMap.low + svMap.info;
+
   const sevBreakdown = [
-    { name: "Critical", value: svMap.critical,  color: SEV.critical.color },
-    { name: "High",     value: svMap.high,      color: SEV.high.color },
-    { name: "Medium",   value: svMap.medium,    color: SEV.medium.color },
-    { name: "Low",      value: svMap.low,       color: SEV.low.color },
-    { name: "Info",     value: svMap.info,      color: SEV.info.color },
+    { name: "Critical", value: svMap.critical,  color: "#ef4444" },
+    { name: "High",     value: svMap.high,      color: "#f97316" },
+    { name: "Medium",   value: svMap.medium,    color: "#eab308" },
+    { name: "Low",      value: svMap.low,       color: "#3b82f6" },
+    { name: "Info",     value: svMap.info,      color: "#6b7280" },
   ];
 
   return (
@@ -100,13 +110,48 @@ export function FindingsCharts({ findings, agents }: FindingsChartsProps) {
         </div>
       </motion.div>
 
+      {/* Severity breakdown (Bar Chart) */}
+      <motion.div
+        className="bg-white rounded-2xl p-5"
+        style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.40 }}
+      >
+        <div className="flex items-center gap-2 mb-4">
+           <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-gray-50" style={{ background: "#F8FAFC" }}>
+             <BarIcon size={14} style={{ color: "#475569" }} />
+           </div>
+           <div>
+             <h3 className="font-bold text-sm" style={{ color: "#0F172A" }}>Score Breakdown</h3>
+             <p className="text-xs" style={{ color: "#94A3B8" }}>Severity distribution</p>
+           </div>
+        </div>
+
+        <div style={{ height: 160 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={sevBreakdown} margin={{ top: 10, right: 8, left: -24, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#94A3B8", fontFamily: "DM Sans" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "DM Sans" }} axisLine={false} tickLine={false} />
+              <Tooltip cursor={{ fill: "#F0F5FF" }} content={ChartTooltip} />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={36}>
+                {sevBreakdown.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
+
       {/* Severity donut */}
       <motion.div
         className="bg-white rounded-2xl p-5"
         style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.42 }}
+        transition={{ delay: 0.45 }}
       >
         <div className="flex items-center gap-2 mb-4">
           <div
@@ -117,9 +162,9 @@ export function FindingsCharts({ findings, agents }: FindingsChartsProps) {
           </div>
           <div>
             <h3 className="font-bold text-sm" style={{ color: "#0F172A" }}>
-              Severity Distribution
+              Total Distribution
             </h3>
-            <p className="text-xs" style={{ color: "#94A3B8" }}>{findings.length} total findings</p>
+            <p className="text-xs" style={{ color: "#94A3B8" }}>{totalFindings} total findings</p>
           </div>
         </div>
 
@@ -164,7 +209,7 @@ export function FindingsCharts({ findings, agents }: FindingsChartsProps) {
                   <div
                     className="h-1 rounded-full"
                     style={{
-                      width: Math.max(8, findings.length ? (d.value / findings.length) * 60 : 0),
+                      width: Math.max(8, totalFindings ? (d.value / totalFindings) * 60 : 0),
                       background: d.color + "55",
                       border: `1px solid ${d.color}88`,
                     }}

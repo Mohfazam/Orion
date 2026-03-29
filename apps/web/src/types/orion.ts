@@ -25,6 +25,15 @@ export interface Run {
   findings?: number;
   prevRunId?: string;
   mode?: 'manual' | 'ci' | 'api';
+  summary?: {
+    bySeverity: {
+      critical: number;
+      high: number;
+      medium: number;
+      low: number;
+      info: number;
+    };
+  };
 }
 
 export interface Finding {
@@ -50,16 +59,13 @@ export interface AgentInfo {
 }
 
 export interface RunDiff {
-  previousRunId: string;
   currentRunId: string;
-  scoreDifference: number;
+  previousRunId: string;
   scoreDelta: number;
-  verdict: 'regression' | 'improvement' | 'unchanged';
-  newFindingsCount: number;
-  resolvedFindingsCount: number;
-  unchangedFindingsCount: number;
   newFindings: Finding[];
   resolvedFindings: Finding[];
+  newCount: number;
+  resolvedCount: number;
 }
 
 export interface PaginatedResponse<T> {
