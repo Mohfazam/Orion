@@ -480,7 +480,7 @@ export default function DashboardPage() {
                                 {isLoadingOverview ? (
                                     <div className="w-full h-full shimmer rounded-full border-[12px] border-white" />
                                 ) : (
-                                    <ResponsiveContainer width="100%" height="100%">
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                         <PieChart>
                                             <Pie
                                                 data={[{ name: "Passed", value: overviewStats.passed }, { name: "Failed", value: overviewStats.failed }]}

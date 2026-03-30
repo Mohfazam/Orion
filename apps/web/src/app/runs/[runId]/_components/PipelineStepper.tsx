@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, Clock, ScanLine, Zap, Target, BarChart2 } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, ScanLine, Zap, Target, BarChart2, Cpu } from "lucide-react";
 import { AgentInfo } from "../../../../types/orion";
 import { formatDuration } from "./shared";
 
@@ -51,6 +51,7 @@ export function PipelineStepper({ agents }: PipelineStepperProps) {
       icon: d.icon,
       status: found?.status || "queued",
       duration: found?.durationMs ? formatDuration(found.durationMs) : null,
+      color: AGENT_META[typeKey]?.color || "var(--primary)",
     };
   });
 
