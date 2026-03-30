@@ -12,10 +12,10 @@ export interface RepoStatsProps {
 }
 
 function scoreStyle(score: number | null) {
-  if (score === null || score === undefined || isNaN(score)) return { main: "#CBD5E1", light: "#F8FAFC", border: "#E2E8F0" };
-  if (score >= 90)   return { main: "#059669", light: "#ECFDF5", border: "#A7F3D0" };
-  if (score >= 70)   return { main: "#D97706", light: "#FFFBEB", border: "#FDE68A" };
-                     return { main: "#DC2626", light: "#FEF2F2", border: "#FECACA" };
+  if (score === null || score === undefined || isNaN(score)) return { main: "var(--text-faint)", light: "var(--bg-muted)", border: "var(--border-muted)" };
+  if (score >= 90)   return { main: "var(--success-dark)", light: "var(--success-bg)", border: "#A7F3D0" };
+  if (score >= 70)   return { main: "var(--warn)", light: "var(--warn-bg)", border: "#FDE68A" };
+                     return { main: "var(--danger-dark)", light: "var(--danger-bg)", border: "#FECACA" };
 }
 
 export function RepoStats({ totalRuns, passed, failed, avgScore }: RepoStatsProps) {
@@ -35,9 +35,9 @@ export function RepoStats({ totalRuns, passed, failed, avgScore }: RepoStatsProp
           label: "Total Runs",
           value: totalRuns,
           icon: <BarChart2 size={16} />,
-          accent: "#2563EB",
-          bg: "#EFF6FF",
-          border: "#DBEAFE",
+          accent: "var(--primary)",
+          bg: "var(--primary-bg)",
+          border: "var(--primary-border)",
           sub: "All time",
           subColor: "#93C5FD",
           trend: null,
@@ -46,8 +46,8 @@ export function RepoStats({ totalRuns, passed, failed, avgScore }: RepoStatsProp
           label: "Passed",
           value: passed,
           icon: <CheckCircle2 size={16} />,
-          accent: "#059669",
-          bg: "#ECFDF5",
+          accent: "var(--success-dark)",
+          bg: "var(--success-bg)",
           border: "#A7F3D0",
           sub: `${passRate}% pass rate`,
           subColor: "#34D399",
@@ -57,8 +57,8 @@ export function RepoStats({ totalRuns, passed, failed, avgScore }: RepoStatsProp
           label: "Failed",
           value: failed,
           icon: <XCircle size={16} />,
-          accent: "#DC2626",
-          bg: "#FEF2F2",
+          accent: "var(--danger-dark)",
+          bg: "var(--danger-bg)",
           border: "#FECACA",
           sub: `${failRate}% fail rate`,
           subColor: "#FCA5A5",
@@ -81,10 +81,10 @@ export function RepoStats({ totalRuns, passed, failed, avgScore }: RepoStatsProp
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.14 + i * 0.07 }}
-          style={{ background: "#fff", borderRadius: 16, padding: "18px 20px", border: `1px solid #F1F5F9`, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}
+          style={{ background: "var(--bg-card)", borderRadius: 16, padding: "18px 20px", border: `1px solid var(--border-light)`, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94A3B8" }}>{s.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-dim)" }}>{s.label}</span>
             <div style={{ width: 30, height: 30, borderRadius: 9, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ color: s.accent }}>{s.icon}</span>
             </div>

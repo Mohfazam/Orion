@@ -14,58 +14,74 @@ export function DiffPanel({ diff }: DiffPanelProps) {
 
   return (
     <motion.div
-      className="bg-white rounded-2xl overflow-hidden"
-      style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+      style={{
+        background: "var(--bg-card)",
+        borderRadius: 16,
+        overflow: "hidden",
+        border: "1px solid var(--border-subtle)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5 }}
     >
       <div
-        className="px-5 py-4 flex items-center gap-3"
-        style={{ borderBottom: "1px solid #F1F5F9", background: "#FAFBFF" }}
+        style={{
+          padding: "16px 20px", display: "flex", alignItems: "center", gap: 12,
+          borderBottom: "1px solid var(--border-light)", background: "var(--bg-subtle)"
+        }}
       >
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ background: isRegression ? "#FEF2F2" : isImprovement ? "#ECFDF5" : "#F8FAFC" }}
+          style={{
+            width: 36, height: 36, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
+            background: isRegression ? "var(--danger-bg)" : isImprovement ? "var(--success-bg)" : "var(--bg-muted)"
+          }}
         >
           {isRegression ? (
-            <TrendingDown size={16} style={{ color: "#DC2626" }} />
+            <TrendingDown size={16} style={{ color: "var(--danger-dark)" }} />
           ) : isImprovement ? (
-            <TrendingUp size={16} style={{ color: "#059669" }} />
+            <TrendingUp size={16} style={{ color: "var(--success-dark)" }} />
           ) : (
-            <Minus size={16} style={{ color: "#64748B" }} />
+            <Minus size={16} style={{ color: "var(--text-muted)" }} />
           )}
         </div>
         <div>
-          <h2 className="bricolage font-bold text-base" style={{ color: "#0F172A" }}>
+          <h2 style={{ margin: 0, fontWeight: 700, fontSize: 16, color: "var(--text-main)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>
             Diff vs Previous Run
           </h2>
-          <p className="text-xs" style={{ color: "#94A3B8" }}>
-            Compared to {diff.previousRunId ? diff.previousRunId.slice(0, 8) : "previous"}...
+          <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)" }}>
+            Compared to {diff.previousRunId.slice(0, 8)}...
           </p>
         </div>
       </div>
 
-      <div className="px-6 py-6 grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div style={{ padding: 20, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
         <div
-          className="rounded-2xl p-5 flex flex-col items-start justify-center"
           style={{ 
-            background: isRegression ? "#FEF2F2" : isImprovement ? "#ECFDF5" : "#F8FAFC", 
-            border: `1px solid ${isRegression ? "#FECACA" : isImprovement ? "#A7F3D0" : "#E2E8F0"}` 
+            gridColumn: "1 / -1",
+            borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", alignItems: "flex-start",
+            background: isRegression ? "var(--danger-bg)" : isImprovement ? "var(--success-bg)" : "var(--bg-muted)", 
+            border: `1px solid ${isRegression ? "#FECACA" : isImprovement ? "#A7F3D0" : "var(--border-muted)"}` 
           }}
         >
-          <div className="text-xs font-semibold uppercase tracking-widest mb-3" 
-               style={{ color: isRegression ? "#FCA5A5" : isImprovement ? "#6EE7B7" : "#CBD5E1" }}>
+          <div 
+             style={{ 
+               fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8,
+               color: isRegression ? "#FCA5A5" : isImprovement ? "#6EE7B7" : "var(--text-faint)" 
+             }}
+          >
             Score Delta
           </div>
-          <div className="flex items-baseline gap-2">
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
             <span
-              className="bricolage font-extrabold"
-              style={{ fontSize: 52, lineHeight: 1, letterSpacing: "-0.02em", color: isRegression ? "#DC2626" : isImprovement ? "#059669" : "#64748B" }}
+              style={{ 
+                fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800,
+                fontSize: 42, lineHeight: 1, color: isRegression ? "var(--danger-dark)" : isImprovement ? "var(--success-dark)" : "var(--text-muted)" 
+              }}
             >
               {diff.scoreDelta > 0 ? `+${diff.scoreDelta}` : diff.scoreDelta}
             </span>
-            <span className="text-sm font-semibold mb-1" style={{ color: isRegression ? "#EF4444" : isImprovement ? "#10B981" : "#94A3B8" }}>
+            <span style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: isRegression ? "var(--danger)" : isImprovement ? "var(--success)" : "var(--text-dim)" }}>
               pts
             </span>
           </div>
@@ -81,35 +97,30 @@ export function DiffPanel({ diff }: DiffPanelProps) {
           {
             label: "Resolved",
             value: diff.resolvedCount,
-            icon: <CheckCircle2 size={15} />,
-            bg: "#ECFDF5", border: "#A7F3D0", text: "#059669", muted: "#6EE7B7",
+            icon: <CheckCircle2 size={14} />,
+            bg: "var(--success-bg)", border: "#A7F3D0", text: "var(--success-dark)", muted: "#6EE7B7",
           }
         ].map((s) => (
           <div
             key={s.label}
-            className="rounded-2xl p-5 flex flex-col justify-center"
-            style={{ background: s.bg, border: `1px solid ${s.border}` }}
+            style={{ borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", background: s.bg, border: `1px solid ${s.border}` }}
           >
-            <div className="flex items-center gap-2 mb-4">
-              <span style={{ color: s.muted }}>{s.icon}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+              <span style={{ color: s.muted, display: "flex" }}>{s.icon}</span>
               <span
-                className="text-xs font-semibold uppercase tracking-widest"
-                style={{ color: s.muted }}
+                style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: s.muted }}
               >
                 {s.label}
               </span>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span
-                className="bricolage font-extrabold"
-                style={{ fontSize: 46, lineHeight: 1, letterSpacing: "-0.02em", color: s.text }}
-              >
-                {s.value}
-              </span>
-              <span className="text-sm font-semibold mb-1" style={{ color: s.muted }}>
-                findings
-              </span>
-            </div>
+            <span
+              style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: 38, lineHeight: 1, color: s.text }}
+            >
+              {s.value}
+            </span>
+            <span style={{ fontSize: 12, marginTop: 6, fontWeight: 500, color: s.muted }}>
+              findings
+            </span>
           </div>
         ))}
       </div>

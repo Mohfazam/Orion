@@ -6,17 +6,17 @@ import { Repo, RunStatus } from "../../../types/orion";
 import { useState } from "react";
 
 function scoreStyle(score: number | null | undefined) {
-  if (score === null || score === undefined) return { main: "#CBD5E1", light: "#F8FAFC", border: "#E2E8F0", label: "—" };
-  if (score >= 90)   return { main: "#059669", light: "#ECFDF5", border: "#A7F3D0", label: "Excellent" };
-  if (score >= 70)   return { main: "#D97706", light: "#FFFBEB", border: "#FDE68A", label: "Needs Improvement" };
-                     return { main: "#DC2626", light: "#FEF2F2", border: "#FECACA", label: "Poor" };
+  if (score === null || score === undefined) return { main: "var(--text-faint)", light: "var(--bg-muted)", border: "var(--border-muted)", label: "—" };
+  if (score >= 90)   return { main: "var(--success-dark)", light: "var(--success-bg)", border: "#A7F3D0", label: "Excellent" };
+  if (score >= 70)   return { main: "var(--warn)", light: "var(--warn-bg)", border: "#FDE68A", label: "Needs Improvement" };
+                     return { main: "var(--danger-dark)", light: "var(--danger-bg)", border: "#FECACA", label: "Poor" };
 }
 
 const STATUS_STYLE: Record<RunStatus, { label: string; bg: string; text: string; dot: string }> = {
-  complete: { label: "Complete", bg: "#EFF6FF", text: "#1D4ED8", dot: "#3B82F6" },
+  complete: { label: "Complete", bg: "var(--primary-bg)", text: "var(--primary-hover)", dot: "var(--primary-light)" },
   running:  { label: "Running",  bg: "#F5F3FF", text: "#6D28D9", dot: "#8B5CF6" },
-  queued:   { label: "Queued",   bg: "#F8FAFC", text: "#64748B", dot: "#94A3B8" },
-  failed:   { label: "Failed",   bg: "#FEF2F2", text: "#DC2626", dot: "#EF4444" },
+  queued:   { label: "Queued",   bg: "var(--bg-muted)", text: "var(--text-muted)", dot: "var(--text-dim)" },
+  failed:   { label: "Failed",   bg: "var(--danger-bg)", text: "var(--danger-dark)", dot: "var(--danger)" },
 };
 
 function StatusBadge({ status }: { status: RunStatus }) {
@@ -40,13 +40,13 @@ function StatusBadge({ status }: { status: RunStatus }) {
 }
 
 function PassFailBadge({ passed }: { passed: boolean | null | undefined }) {
-  if (passed === null || passed === undefined) return <span style={{ color: "#CBD5E1", fontSize: 12, fontWeight: 600 }}>—</span>;
+  if (passed === null || passed === undefined) return <span style={{ color: "var(--text-faint)", fontSize: 12, fontWeight: 600 }}>—</span>;
   return passed ? (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "#ECFDF5", color: "#059669", border: "1px solid #A7F3D0" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "var(--success-bg)", color: "var(--success-dark)", border: "1px solid #A7F3D0" }}>
       <CheckCircle2 size={10} /> Pass
     </span>
   ) : (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "var(--danger-bg)", color: "var(--danger-dark)", border: "1px solid #FECACA" }}>
       <XCircle size={10} /> Fail
     </span>
   );
@@ -91,27 +91,27 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
       initial={{ opacity: 0, y: 20, scale: 0.97 }}
       animate={{ opacity: 1, y: 0,  scale: 1    }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      style={isEditing ? { borderColor: "#2563EB", boxShadow: "0 0 0 4px rgba(37,99,235,0.10), 0 8px 24px rgba(37,99,235,0.12)" } : {}}
+      style={isEditing ? { borderColor: "var(--primary)", boxShadow: "0 0 0 4px rgba(37,99,235,0.10), 0 8px 24px rgba(37,99,235,0.12)" } : {}}
     >
       <div style={{ height: 4, background: sc.main, opacity: 0.7, flexShrink: 0 }} />
 
       <div style={{ padding: "18px 20px 0", display: "flex", flexDirection: "column", gap: 0, flex: 1 }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
           <div style={{ minWidth: 0 }}>
-            <div className="bricolage" style={{ fontWeight: 700, fontSize: 16, color: "#0F172A", lineHeight: 1.3, display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ color: "#94A3B8", fontWeight: 500 }}>{repo.owner}/</span>
+            <div className="bricolage" style={{ fontWeight: 700, fontSize: 16, color: "var(--text-main)", lineHeight: 1.3, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ color: "var(--text-dim)", fontWeight: 500 }}>{repo.owner}/</span>
               <span>{repo.repo}</span>
             </div>
             
             {(repo as any).branch || (repo as any).lastCommit ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5 }}>
                   {(repo as any).branch && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#7C3AED", background: "#F5F3FF", border: "1px solid #DDD6FE", padding: "2px 8px", borderRadius: 999, fontWeight: 600 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#A78BFA", background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.24)", padding: "2px 8px", borderRadius: 999, fontWeight: 600 }}>
                         <GitBranch size={10} /> {(repo as any).branch}
                       </span>
                   )}
                   {(repo as any).lastCommit && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#94A3B8", fontWeight: 500 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--text-dim)", fontWeight: 500 }}>
                         <GitCommit size={10} /> {(repo as any).lastCommit}
                       </span>
                   )}
@@ -146,12 +146,12 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
               transition={{ duration: 0.22 }}
               style={{ marginBottom: 14, overflow: "hidden" }}
             >
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#94A3B8", marginBottom: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-dim)", marginBottom: 6 }}>
                 Edit Staging URL
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 <div style={{ position: "relative", flex: 1 }}>
-                  <Globe size={13} style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", left: 10, color: "#2563EB", pointerEvents: "none" }} />
+                  <Globe size={13} style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", left: 10, color: "var(--primary)", pointerEvents: "none" }} />
                   <input
                     type="url"
                     value={editVal}
@@ -161,8 +161,8 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
                     className="input-glow"
                     style={{
                       width: "100%", height: 36, paddingLeft: 30, paddingRight: 10,
-                      fontSize: 12, color: "#0F172A", fontFamily: "monospace",
-                      background: "#F8FAFF", border: "1.5px solid #DBEAFE",
+                      fontSize: 12, color: "var(--text-main)", fontFamily: "monospace",
+                      background: "var(--bg-muted)", border: "1.5px solid var(--primary-border)",
                       borderRadius: 10, outline: "none",
                     }}
                   />
@@ -172,7 +172,7 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
                   disabled={isSaving}
                   style={{
                     width: 36, height: 36, borderRadius: 10,
-                    background: isSaving ? "#94A3B8" : "#2563EB", color: "#fff", border: "none",
+                    background: isSaving ? "var(--text-dim)" : "var(--primary)", color: "var(--text-inverse)", border: "none",
                     display: "flex", alignItems: "center", justifyContent: "center", cursor: isSaving ? "not-allowed" : "pointer",
                     boxShadow: isSaving ? "none" : "0 2px 8px rgba(37,99,235,0.3)",
                   }}
@@ -184,14 +184,14 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
                   disabled={isSaving}
                   style={{
                     width: 36, height: 36, borderRadius: 10,
-                    background: "#F8FAFC", border: "1.5px solid #E2E8F0",
+                    background: "var(--bg-muted)", border: "1.5px solid var(--border-muted)",
                     display: "flex", alignItems: "center", justifyContent: "center", cursor: isSaving ? "not-allowed" : "pointer",
                   }}
                 >
-                  <X size={13} style={{ color: "#94A3B8" }} />
+                  <X size={13} style={{ color: "var(--text-dim)" }} />
                 </button>
               </div>
-              {saveErr && <div style={{ color: "#DC2626", fontSize: 11, marginTop: 4, fontWeight: 600 }}>{saveErr}</div>}
+              {saveErr && <div style={{ color: "var(--danger-dark)", fontSize: 11, marginTop: 4, fontWeight: 600 }}>{saveErr}</div>}
             </motion.div>
           ) : (
             <motion.a
@@ -205,14 +205,14 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
               style={{
                 display: "flex", alignItems: "center", gap: 7, marginBottom: 14,
                 padding: "8px 12px", borderRadius: 10,
-                background: "#F8FAFF", border: "1px solid #EFF3FB",
+                background: "var(--bg-muted)", border: "1px solid var(--border-subtle)",
                 textDecoration: "none", transition: "border-color 0.14s",
               }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = "#BFDBFE")}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = "#EFF3FB")}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--primary-border-light)")}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border-subtle)")}
             >
-              <Globe size={12} style={{ color: "#2563EB", flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: "#475569", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+              <Globe size={12} style={{ color: "var(--primary)", flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: "var(--text-main)", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                 {(repo.stagingUrl || "").replace(/^https?:\/\//, "")}
               </span>
             </motion.a>
@@ -221,33 +221,33 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 14 }}>
             {(repo as any).findings && (
-                <div style={{ background: "#FAFBFF", border: "1px solid #F1F5F9", borderRadius: 10, padding: "8px 10px" }}>
+                <div style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-light)", borderRadius: 10, padding: "8px 10px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 3 }}>
-                    <span style={{ color: "#CBD5E1" }}><AlertTriangle size={11} /></span>
-                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#CBD5E1" }}>Findings</span>
+                    <span style={{ color: "var(--text-faint)" }}><AlertTriangle size={11} /></span>
+                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-faint)" }}>Findings</span>
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: (repo as any).findings > 15 ? "#DC2626" : (repo as any).findings > 5 ? "#D97706" : (repo as any).findings > 0 ? "#059669" : "#CBD5E1", fontVariantNumeric: "tabular-nums" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: (repo as any).findings > 15 ? "var(--danger-dark)" : (repo as any).findings > 5 ? "var(--warn)" : (repo as any).findings > 0 ? "var(--success-dark)" : "var(--text-faint)", fontVariantNumeric: "tabular-nums" }}>
                     {(repo as any).findings}
                   </div>
                 </div>
             )}
             {(repo as any).duration && (
-                <div style={{ background: "#FAFBFF", border: "1px solid #F1F5F9", borderRadius: 10, padding: "8px 10px" }}>
+                <div style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-light)", borderRadius: 10, padding: "8px 10px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 3 }}>
-                    <span style={{ color: "#CBD5E1" }}><Clock size={11} /></span>
-                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#CBD5E1" }}>Duration</span>
+                    <span style={{ color: "var(--text-faint)" }}><Clock size={11} /></span>
+                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-faint)" }}>Duration</span>
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#64748B", fontVariantNumeric: "tabular-nums" }}>{(repo as any).duration}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>{(repo as any).duration}</div>
                 </div>
             )}
-            <div style={{ background: "#FAFBFF", border: "1px solid #F1F5F9", borderRadius: 10, padding: "8px 10px", gridColumn: ((repo as any).duration || (repo as any).findings) ? "span 1" : "span 2" }}>
+            <div style={{ background: "var(--bg-subtle)", border: "1px solid var(--border-light)", borderRadius: 10, padding: "8px 10px", gridColumn: ((repo as any).duration || (repo as any).findings) ? "span 1" : "span 2" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 3 }}>
-                <span style={{ color: "#CBD5E1" }}><Calendar size={11} /></span>
-                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#CBD5E1" }}>
+                <span style={{ color: "var(--text-faint)" }}><Calendar size={11} /></span>
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-faint)" }}>
                   Last run
                 </span>
               </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#64748B", fontVariantNumeric: "tabular-nums" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
                 {repo.lastRun ? getFormatDate(repo.lastRun.createdAt).split(" · ")[0] : "—"}
               </div>
             </div>
@@ -260,7 +260,7 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
               <PassFailBadge passed={repo.lastRun.passed} />
             </>
           ) : (
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#94A3B8" }}>No runs yet</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)" }}>No runs yet</span>
           )}
           
           {(repo as any).language && (
@@ -270,7 +270,7 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
               </span>
           )}
           {(repo as any).stars !== undefined && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, color: "#94A3B8" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, color: "var(--text-dim)" }}>
                 <Star size={10} style={{ fill: "#FCD34D", stroke: "#FCD34D" }} />
                 {(repo as any).stars}
               </span>
@@ -278,31 +278,25 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
         </div>
       </div>
 
-      <div style={{ borderTop: "1px solid #F1F5F9", padding: "12px 20px", background: "#FAFBFF", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: "auto" }}>
+      <div style={{ borderTop: "1px solid var(--border-light)", padding: "12px 20px", background: "var(--bg-subtle)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: "auto" }}>
         <div style={{ display: "flex", gap: 6 }}>
-          {repo.lastRun ? (
-              <a
-                href={`/runs/${repo.lastRun.runId}`}
-                className="outline-btn"
-                style={{ background: "#EFF6FF", color: "#1D4ED8", borderColor: "#BFDBFE", textDecoration: "none" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#DBEAFE"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#EFF6FF"; }}
-              >
-                <BarChart2 size={12} /> View Output
-              </a>
-          ) : (
-             <span className="outline-btn" style={{ background: "#F8FAFC", color: "#94A3B8", borderColor: "#E2E8F0", cursor: "not-allowed" }}>
-                 <BarChart2 size={12} /> View Output
-             </span>
-          )}
+          <a
+            href={`/repos/${repo.id}`}
+            className="outline-btn"
+            style={{ background: "var(--primary-bg)", color: "var(--primary-hover)", borderColor: "var(--primary-border-light)", textDecoration: "none" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--primary-border)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--primary-bg)"; }}
+          >
+            <BarChart2 size={12} /> View Output
+          </a>
 
           <button
             onClick={isEditing ? onCancelEdit : () => { onEdit(); setEditVal(repo.stagingUrl); }}
             className="outline-btn"
             style={{
-              background: isEditing ? "#FFFBEB" : "#F8FAFC",
-              color: isEditing ? "#D97706" : "#64748B",
-              borderColor: isEditing ? "#FDE68A" : "#E2E8F0",
+              background: isEditing ? "var(--warn-bg)" : "var(--bg-muted)",
+              color: isEditing ? "var(--warn)" : "var(--text-muted)",
+              borderColor: isEditing ? "#FDE68A" : "var(--border-muted)",
             }}
           >
             <Pencil size={12} /> {isEditing ? "Editing…" : "Edit URL"}
@@ -310,7 +304,7 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
         </div>
 
         <button style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 600, color: "#FCA5A5", padding: "4px 6px", borderRadius: 6, transition: "color 0.13s" }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#DC2626"; }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--danger-dark)"; }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#FCA5A5"; }}
           onClick={onDisconnect}
         >

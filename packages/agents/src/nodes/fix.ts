@@ -9,6 +9,18 @@ import { db, runs, connectedRepos, eq, and } from "@repo/db";
 
 const MAX_FILES_TO_FIX = 3;
 
+const REVIEWABLE_EXTENSIONS = [
+  ".ts", ".tsx", ".js", ".jsx", ".vue", ".py",
+  ".go", ".java", ".rb", ".php", ".cs",
+  ".html", ".css", ".scss",
+];
+
+// Search these dirs in order — same as codeReview.ts
+const SOURCE_DIRS = [
+  "src", "app", "pages", "components",
+  "lib", "utils", "hooks", "api", "",
+];
+
 // ── Octokit factory ────────────────────────────────────────────────────────
 
 function getOctokit(installationId: string): Octokit {
@@ -89,19 +101,126 @@ async function commitFixedFile(
   await octokit.repos.createOrUpdateFileContents({
     owner,
     repo,
-    path: filePath,
+    path:    filePath,
     message: commitMessage,
     content: contentBase64,
-    sha: existing.sha as string,
+    sha:     existing.sha as string,
     branch,
   });
 }
 
+// ── Scan mode helpers ──────────────────────────────────────────────────────
+
+async function createBranch(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  branchName: string,
+  fromBranch: string = "main"
+): Promise<boolean> {
+  try {
+    const { data: ref } = await octokit.git.getRef({
+      owner,
+      repo,
+      ref: `heads/${fromBranch}`,
+    });
+
+    await octokit.git.createRef({
+      owner,
+      repo,
+      ref: `refs/heads/${branchName}`,
+      sha: ref.object.sha,
+    });
+
+    return true;
+  } catch (err) {
+    console.error(`[fix_agent] Failed to create branch ${branchName}:`, err);
+    return false;
+  }
+}
+
+async function createPullRequest(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  title: string,
+  body: string,
+  head: string,
+  base: string = "main"
+): Promise<{ number: number; html_url: string } | null> {
+  try {
+    const { data } = await octokit.pulls.create({
+      owner,
+      repo,
+      title,
+      body,
+      head,
+      base,
+    });
+    return { number: data.number, html_url: data.html_url };
+  } catch (err) {
+    console.error("[fix_agent] Failed to create PR:", err);
+    return null;
+  }
+}
+
+// Searches SOURCE_DIRS in order and collects up to 10 real source files
+async function getRepoFiles(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  branch: string = "main"
+): Promise<string[]> {
+  const collected: string[] = [];
+  const seen = new Set<string>();
+
+  for (const dir of SOURCE_DIRS) {
+    if (collected.length >= 10) break;
+
+    try {
+      const { data } = await octokit.repos.getContent({
+        owner,
+        repo,
+        path: dir,
+        ref:  branch,
+      });
+
+      if (!Array.isArray(data)) continue;
+
+      for (const item of data) {
+        if (
+          item.type === "file" &&
+          REVIEWABLE_EXTENSIONS.some((ext) => item.name.endsWith(ext)) &&
+          !seen.has(item.path)
+        ) {
+          seen.add(item.path);
+          collected.push(item.path);
+          console.log(`[fix_agent] Found source file: ${item.path}`);
+        }
+      }
+    } catch {
+      // Directory doesn't exist in this repo — silently skip
+      continue;
+    }
+  }
+
+  return collected;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+// Performance agent findings use URLs as file paths (e.g. "https://sol4-u.vercel.app/")
+// These are NOT real GitHub file paths — filter them out
+const isRealFilePath = (file?: string): boolean => {
+  if (!file) return false;
+  if (file.startsWith("http://") || file.startsWith("https://")) return false;
+  return true;
+};
+
 // ── Fix Agent ──────────────────────────────────────────────────────────────
 
 export async function fixAgent(state: OrionState): Promise<OrionState> {
-  // Only run in CI mode with a failing score
-  if (state.mode !== "ci" || state.overallScore >= 95) {
+  if (state.mode !== "ci" || state.overallScore >= 99) {
     console.log(
       `[fix_agent] Skipping — mode: ${state.mode}, score: ${state.overallScore}`
     );
@@ -119,15 +238,17 @@ export async function fixAgent(state: OrionState): Promise<OrionState> {
       return state;
     }
 
-    const { pr, sha, branch, repo, owner } = runRow.ciContext as {
-      pr: number;
+    const ciContext = runRow.ciContext as {
+      pr?: number;
       sha: string;
       branch: string;
       repo: string;
       owner: string;
     };
 
-    // ── Get installationId from connected_repos ────────────────────────
+    const { pr, sha, branch, repo, owner } = ciContext;
+
+    // ── Get installationId ─────────────────────────────────────────────
     const repoRow = await db.query.connectedRepos.findFirst({
       where: and(
         eq(connectedRepos.owner, owner),
@@ -140,36 +261,83 @@ export async function fixAgent(state: OrionState): Promise<OrionState> {
       return state;
     }
 
-    const octokit = getOctokit(repoRow.installationId);
+    const octokit   = getOctokit(repoRow.installationId);
+    const isScanMode = !pr;
 
-    // ── Get files changed in the PR ────────────────────────────────────
-    const changedFiles = await getPRFiles(octokit, owner, repo, pr);
+    // ── Get files to consider ──────────────────────────────────────────
+    let filesToConsider: string[];
 
-    // ── Filter to high/critical findings that match a changed file ─────
+    if (isScanMode) {
+      console.log("[fix_agent] Scan mode — searching source directories on main branch");
+      filesToConsider = await getRepoFiles(octokit, owner, repo, "main");
+    } else {
+      console.log(`[fix_agent] PR mode — reading files from PR #${pr}`);
+      filesToConsider = await getPRFiles(octokit, owner, repo, pr!);
+    }
+
+    console.log(`[fix_agent] ${filesToConsider.length} file(s) available to fix`);
+
+    // ── Filter findings — real file paths only, matched against repo files ─
     const actionableFindings = state.findings.filter(
       (f) =>
         (f.severity === "critical" || f.severity === "high") &&
-        f.file &&
-        changedFiles.includes(f.file)
+        isRealFilePath(f.file) &&
+        filesToConsider.some(
+          (p) => f.file!.includes(p) || p.includes(f.file!)
+        )
     );
 
-    if (actionableFindings.length === 0) {
-      console.log("[fix_agent] No actionable findings matched changed files.");
+    // In scan mode: also grab high/critical findings with real paths not matched above
+    const extraFindings = isScanMode
+      ? state.findings.filter(
+          (f) =>
+            (f.severity === "critical" || f.severity === "high") &&
+            isRealFilePath(f.file) &&
+            f.fixSuggestion &&
+            !actionableFindings.includes(f)
+        )
+      : [];
+
+    const allActionable = [...actionableFindings, ...extraFindings];
+
+    console.log(
+      `[fix_agent] ${actionableFindings.length} matched + ${extraFindings.length} extra = ${allActionable.length} actionable finding(s)`
+    );
+
+    if (allActionable.length === 0) {
+      console.log("[fix_agent] No actionable findings to fix.");
       return state;
     }
 
-    const toFix = actionableFindings.slice(0, MAX_FILES_TO_FIX);
+    const toFix = allActionable.slice(0, MAX_FILES_TO_FIX);
     console.log(`[fix_agent] Attempting to fix ${toFix.length} finding(s).`);
 
+    // ── Scan mode: create a new branch ────────────────────────────────
+    let fixBranch = branch;
+
+    if (isScanMode) {
+      const newBranchName = `orion-fixes/${state.runId}`;
+      console.log(`[fix_agent] Creating branch ${newBranchName} from main...`);
+
+      const created = await createBranch(octokit, owner, repo, newBranchName, "main");
+
+      if (!created) {
+        console.log("[fix_agent] Failed to create fix branch, skipping.");
+        return state;
+      }
+
+      fixBranch = newBranchName;
+    }
+
     // ── Fix each finding ───────────────────────────────────────────────
+    let fixedCount = 0;
+
     for (const finding of toFix) {
       try {
+        const fileRef = isScanMode ? "main" : sha;
+
         const fileContent = await getFileContent(
-          octokit,
-          owner,
-          repo,
-          finding.file!,
-          sha
+          octokit, owner, repo, finding.file!, fileRef
         );
 
         const result = await askJSON<{
@@ -195,28 +363,70 @@ ${fileContent}`
         }
 
         await commitFixedFile(
-          octokit,
-          owner,
-          repo,
+          octokit, owner, repo,
           finding.file!,
           result.fixedContent,
-          branch,
+          fixBranch,
           `fix(orion-qa): ${finding.title}`
         );
 
+        fixedCount++;
         console.log(
           `[fix_agent] ✅ Committed fix for ${finding.file} — ${result.explanation}`
         );
       } catch (innerErr) {
-        // Never crash the pipeline — log and move on
         console.error(
           `[fix_agent] Failed to fix ${finding.file}:`,
           innerErr instanceof Error ? innerErr.message : innerErr
         );
       }
     }
+
+    // ── Scan mode: open a PR ───────────────────────────────────────────
+    if (isScanMode && fixedCount > 0) {
+      console.log("[fix_agent] Opening fix PR...");
+
+      const prBody = `## 🤖 Orion QA — Automated Fix PR
+
+Orion ran a full QA audit on \`main\` and found **${state.findings.length} issues** (score: **${state.overallScore}/100**).
+This PR contains AI-generated fixes for ${fixedCount} critical/high severity finding(s).
+
+### What to do
+1. Review the changes in this PR
+2. Merge when you're satisfied with the fixes
+3. Run another QA scan to verify the score improved
+
+---
+*Auto-generated by [Orion QA Agent](https://github.com/apps/orion-qa-agent)*`;
+
+      const createdPr = await createPullRequest(
+        octokit, owner, repo,
+        `fix(orion-qa): Automated fixes — ${fixedCount} issues resolved (score: ${state.overallScore}/100)`,
+        prBody,
+        fixBranch,
+        "main"
+      );
+
+      if (createdPr) {
+        console.log(
+          `[fix_agent] ✅ Opened fix PR #${createdPr.number}: ${createdPr.html_url}`
+        );
+
+        const existingState = (runRow.state as Record<string, unknown>) ?? {};
+        await db
+          .update(runs)
+          .set({
+            state: {
+              ...existingState,
+              fixPrNumber: createdPr.number,
+              fixPrUrl:    createdPr.html_url,
+              fixBranch,
+            },
+          })
+          .where(eq(runs.id, state.runUUID));
+      }
+    }
   } catch (err) {
-    // Outer catch — pipeline always continues
     console.error(
       "[fix_agent] Outer error (pipeline continues):",
       err instanceof Error ? err.message : err

@@ -34,14 +34,23 @@ const STATUS_STYLE = {
 
 export function PipelineStepper({ agents }: PipelineStepperProps) {
   const PIPELINE = AGENT_ORDER.map((typeKey) => {
-    const found = agents.find(a => a.type === typeKey);
-    const meta = AGENT_META[typeKey];
+    const found = agents.find((a) => (a.agent || a.type) === typeKey);
+    const defaults = {
+      discovery: { name: "Discovery", desc: "Crawls pages & maps site structure", icon: <ScanLine size={16} /> },
+      performance: { name: "Performance", desc: "Audits load speed & resource budget", icon: <Zap size={16} /> },
+      scoring: { name: "Scoring", desc: "Weights findings into a 0–100 score", icon: <Target size={16} /> },
+      visualization: { name: "Visualization", desc: "Generates charts and diff analysis", icon: <BarChart2 size={16} /> },
+    } as any;
+
+    const d = defaults[typeKey];
+
     return {
       key: typeKey,
-      ...meta,
-      status: (found?.status || "queued") as keyof typeof STATUS_STYLE,
+      name: found?.name || d.name,
+      desc: d.desc,
+      icon: d.icon,
+      status: found?.status || "queued",
       duration: found?.durationMs ? formatDuration(found.durationMs) : null,
-      score: found?.score,
     };
   });
 
@@ -51,20 +60,32 @@ export function PipelineStepper({ agents }: PipelineStepperProps) {
 
   return (
     <motion.div
-      className="card card-glow"
-      style={{ padding: "24px 28px" }}
+      style={{
+        background: "var(--bg-card)",
+        borderRadius: 16,
+        padding: 24,
+        border: "1px solid var(--border-subtle)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2, duration: 0.45 }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+        <div
+          style={{
+            width: 36, height: 36, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "var(--primary-bg)",
+          }}
+        >
+          <Cpu size={16} style={{ color: "var(--primary)" }} />
+        </div>
         <div>
-          <h2 className="bricolage font-bold text-base" style={{ color: "var(--text-primary)" }}>
+          <h2 style={{ margin: 0, fontWeight: 700, fontSize: 16, color: "var(--text-main)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>
             Agent Pipeline
           </h2>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-            {doneCount} of {PIPELINE.length} agents complete
+          <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)" }}>
+            4 agents · tracking execution sequence
           </p>
         </div>
         {/* Compact progress pill */}
@@ -87,47 +108,32 @@ export function PipelineStepper({ agents }: PipelineStepperProps) {
         </div>
       </div>
 
-      {/* Steps */}
-      <div className="relative">
-        {/* Connector track */}
-        <div
-          className="absolute hidden sm:block"
-          style={{
-            top: 20, left: "12.5%", right: "12.5%", height: 2,
-            background: "var(--border)", borderRadius: 99, zIndex: 0,
-          }}
-        />
-        {/* Filled connector */}
-        <motion.div
-          className="absolute hidden sm:block"
-          style={{
-            top: 20, left: "12.5%", height: 2,
-            background: "linear-gradient(90deg, #2563EB, #7C3AED, #0891B2)",
-            borderRadius: 99, zIndex: 1,
-          }}
-          initial={{ width: 0 }}
-          animate={{ width: `${progressPct * 0.75}%` }}
-          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
-        />
+      <div style={{ display: "flex", gap: 0, overflowX: "auto", paddingBottom: 8, width: "100%" }}>
+        {PIPELINE.map((step, index) => {
+          const isLast = index === PIPELINE.length - 1;
+          const statusConfig = {
+            complete: { ring: "var(--primary-border)", bg: "var(--primary-bg)", icon: <CheckCircle2 size={14} style={{ color: "var(--primary)" }} />, lineColor: "var(--primary-border-light)" },
+            running: { ring: "#DDD6FE", bg: "#F5F3FF", icon: <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#8B5CF6" }} className="pulse-ring" />, lineColor: "var(--border-muted)" },
+            queued: { ring: "var(--border-muted)", bg: "var(--bg-muted)", icon: <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--text-faint)" }} />, lineColor: "var(--border-muted)" },
+            failed: { ring: "#FECACA", bg: "var(--danger-bg)", icon: <XCircle size={14} style={{ color: "var(--danger-dark)" }} />, lineColor: "var(--border-muted)" },
+          };
+          const s = statusConfig[step.status as keyof typeof statusConfig] || statusConfig.queued;
 
-        <div className="relative flex">
-          {PIPELINE.map((step, i) => {
-            const ss = STATUS_STYLE[step.status];
-            return (
-              <motion.div
-                key={step.key}
-                className="relative flex flex-col items-center text-center w-1/4"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 + i * 0.1, duration: 0.4 }}
-              >
-                {/* Icon circle */}
+          return (
+            <motion.div
+              key={step.key}
+              style={{ flex: "1 1 0%", display: "flex", flexDirection: "column", minWidth: 150 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 + index * 0.1, duration: 0.4 }}
+            >
+              <div style={{ display: "flex", alignItems: "center" }}>
                 <div
-                  className="relative w-10 h-10 rounded-full flex items-center justify-center mb-3"
                   style={{
-                    background: step.status === "queued" ? "#F8FAFC" : step.bg,
-                    border: `2px solid ${ss.ring}`,
-                    boxShadow: step.status !== "queued" ? `0 0 0 4px ${step.bg}` : "0 0 0 4px #fff",
+                    width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, zIndex: 10,
+                    background: s.bg,
+                    border: `2px solid ${s.ring}`,
+                    boxShadow: step.status === "complete" ? "0 0 0 4px var(--primary-bg)" : undefined,
                   }}
                 >
                   {step.status === "running" && (
@@ -156,41 +162,32 @@ export function PipelineStepper({ agents }: PipelineStepperProps) {
                     {step.name}
                   </span>
                 </div>
+                {!isLast && (
+                  <div
+                    style={{
+                      flex: 1, height: 2, margin: "0 4px",
+                      background: step.status === "complete" ? "var(--primary-border-light)" : "var(--border-muted)",
+                    }}
+                  />
+                )}
+              </div>
 
-                {/* Description */}
-                <p className="hidden sm:block text-xs leading-snug px-1 mb-2" style={{ color: "var(--text-muted)" }}>
-                  {step.desc}
-                </p>
-
-                {/* Status + Duration */}
-                <div className="flex flex-col items-center gap-1">
-                  <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: ss.labelBg, color: ss.labelColor, fontSize: 10 }}
-                  >
-                    {step.status === "running" ? (
-                      <span className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full animate-pulse inline-block" style={{ background: ss.dot }} />
-                        Running
-                      </span>
-                    ) : ss.label}
-                  </span>
-                  {step.duration && (
-                    <div
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-md"
-                      style={{ background: "var(--accent-light)", border: "1px solid var(--accent-mid)" }}
-                    >
-                      <Clock size={9} style={{ color: "var(--accent)" }} />
-                      <span className="mono font-semibold" style={{ fontSize: 9, color: "var(--accent)" }}>
-                        {step.duration}
-                      </span>
-                    </div>
-                  )}
+              <div style={{ marginTop: 12, paddingRight: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                  <span style={{ color: "var(--text-muted)", flexShrink: 0, display: "flex" }}>{step.icon}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-main)" }}>{step.name}</span>
                 </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                <p style={{ fontSize: 12, lineHeight: 1.6, margin: 0, color: "var(--text-dim)" }}>{step.desc}</p>
+                {step.duration && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6 }}>
+                    <Clock size={10} style={{ color: "var(--primary)" }} />
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--primary)" }}>{step.duration}</span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </motion.div>
   );

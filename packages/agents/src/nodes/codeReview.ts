@@ -9,7 +9,27 @@ import { db, runs, connectedRepos, eq, and } from "@repo/db";
 import { updateRunNode, saveAgentResult } from "../db";
 
 const MAX_FILES_TO_REVIEW = 5;
-const MAX_FILE_SIZE_CHARS = 8000; // truncate large files to avoid token overflow
+const MAX_FILE_SIZE_CHARS = 8000;
+
+const REVIEWABLE_EXTENSIONS = [
+  ".ts", ".tsx", ".js", ".jsx", ".vue", ".py",
+  ".go", ".java", ".rb", ".php", ".cs", ".cpp", ".c",
+  ".html", ".css", ".scss",
+  // intentionally exclude .json — package.json/tsconfig have no real findings
+];
+
+// Common source directories to search in order of priority
+const SOURCE_DIRS = [
+  "src",
+  "app",
+  "pages",
+  "components",
+  "lib",
+  "utils",
+  "hooks",
+  "api",
+  "", // root last — fallback
+];
 
 // ── Octokit factory ────────────────────────────────────────────────────────
 
@@ -43,6 +63,65 @@ async function getPRFiles(
     pull_number: prNumber,
   });
   return data.map((f) => ({ filename: f.filename, patch: f.patch }));
+}
+
+// Lists files from a single directory path (non-recursive)
+async function listDirFiles(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  dirPath: string,
+  branch: string
+): Promise<{ filename: string }[]> {
+  try {
+    const { data } = await octokit.repos.getContent({
+      owner,
+      repo,
+      path: dirPath,
+      ref: branch,
+    });
+
+    if (!Array.isArray(data)) return [];
+
+    return data
+      .filter(
+        (item) =>
+          item.type === "file" &&
+          REVIEWABLE_EXTENSIONS.some((ext) => item.name.endsWith(ext))
+      )
+      .map((item) => ({ filename: item.path }));
+  } catch {
+    // Directory doesn't exist in this repo — silently skip
+    return [];
+  }
+}
+
+// Searches SOURCE_DIRS in order, collects up to MAX_FILES_TO_REVIEW real source files
+async function getRepoFiles(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  branch: string = "main"
+): Promise<{ filename: string }[]> {
+  const collected: { filename: string }[] = [];
+  const seen = new Set<string>();
+
+  for (const dir of SOURCE_DIRS) {
+    if (collected.length >= MAX_FILES_TO_REVIEW) break;
+
+    const files = await listDirFiles(octokit, owner, repo, dir, branch);
+
+    for (const f of files) {
+      if (collected.length >= MAX_FILES_TO_REVIEW) break;
+      if (!seen.has(f.filename)) {
+        seen.add(f.filename);
+        collected.push(f);
+        console.log(`[code_review] Found source file: ${f.filename}`);
+      }
+    }
+  }
+
+  return collected;
 }
 
 async function getFileContent(
@@ -84,9 +163,10 @@ async function reviewFile(
   content: string,
   patch?: string
 ): Promise<CodeReviewResult["findings"]> {
-  const truncated = content.length > MAX_FILE_SIZE_CHARS
-    ? content.slice(0, MAX_FILE_SIZE_CHARS) + "\n... (truncated)"
-    : content;
+  const truncated =
+    content.length > MAX_FILE_SIZE_CHARS
+      ? content.slice(0, MAX_FILE_SIZE_CHARS) + "\n... (truncated)"
+      : content;
 
   const result = await askJSON<CodeReviewResult>(
     `You are a senior code reviewer and security engineer.
@@ -125,7 +205,6 @@ ${truncated}`
 // ── Code Review Agent ──────────────────────────────────────────────────────
 
 export async function codeReviewAgent(state: OrionState): Promise<OrionState> {
-  // Only runs in CI mode
   if (state.mode !== "ci") {
     console.log("[code_review] Skipping — not CI mode");
     return state;
@@ -133,12 +212,11 @@ export async function codeReviewAgent(state: OrionState): Promise<OrionState> {
 
   const startedAt = new Date();
   await updateRunNode(state.runUUID, "code_review_agent", "running");
-  console.log(`[code_review] Starting PR code review for run ${state.runId}`);
+  console.log(`[code_review] Starting code review for run ${state.runId}`);
 
   const newFindings: Finding[] = [];
 
   try {
-    // ── Get ciContext from DB ────────────────────────────────────────────
     const runRow = await db.query.runs.findFirst({
       where: eq(runs.id, state.runUUID),
     });
@@ -149,15 +227,16 @@ export async function codeReviewAgent(state: OrionState): Promise<OrionState> {
       return state;
     }
 
-    const { pr, sha, repo, owner } = runRow.ciContext as {
-      pr: number;
+    const ciContext = runRow.ciContext as {
+      pr?: number;
       sha: string;
       branch: string;
       repo: string;
       owner: string;
     };
 
-    // ── Get installationId ───────────────────────────────────────────────
+    const { pr, sha, repo, owner } = ciContext;
+
     const repoRow = await db.query.connectedRepos.findFirst({
       where: and(
         eq(connectedRepos.owner, owner),
@@ -172,76 +251,77 @@ export async function codeReviewAgent(state: OrionState): Promise<OrionState> {
     }
 
     const octokit = getOctokit(repoRow.installationId);
+    const isScanMode = !pr;
 
-    // ── Get PR changed files ─────────────────────────────────────────────
-    const prFiles = await getPRFiles(octokit, owner, repo, pr);
+    let filesToReview: { filename: string; patch?: string }[];
 
-    // Filter to reviewable code files only
-    const reviewableExtensions = [
-      ".ts", ".tsx", ".js", ".jsx", ".vue", ".py",
-      ".go", ".java", ".rb", ".php", ".cs", ".cpp", ".c",
-      ".html", ".css", ".scss", ".json",
-    ];
+    if (isScanMode) {
+      console.log("[code_review] Scan mode — searching source directories on main branch");
+      const repoFiles = await getRepoFiles(octokit, owner, repo, "main");
+      filesToReview = repoFiles;
+    } else {
+      console.log(`[code_review] PR mode — reading files from PR #${pr}`);
+      const prFiles = await getPRFiles(octokit, owner, repo, pr!);
+      filesToReview = prFiles.filter((f) =>
+        REVIEWABLE_EXTENSIONS.some((ext) => f.filename.endsWith(ext))
+      );
+    }
 
-    const codeFiles = prFiles.filter((f) =>
-      reviewableExtensions.some((ext) => f.filename.endsWith(ext))
-    );
-
-    const toReview = codeFiles.slice(0, MAX_FILES_TO_REVIEW);
+    const toReview = filesToReview.slice(0, MAX_FILES_TO_REVIEW);
 
     console.log(
-      `[code_review] Reviewing ${toReview.length} file(s) out of ${prFiles.length} changed`
+      `[code_review] Reviewing ${toReview.length} file(s) out of ${filesToReview.length} found`
     );
 
-    // ── Review each file ─────────────────────────────────────────────────
-    for (const prFile of toReview) {
+    for (const file of toReview) {
       try {
-        console.log(`[code_review] Reviewing ${prFile.filename}...`);
+        console.log(`[code_review] Reviewing ${file.filename}...`);
+
+        const ref = isScanMode ? "main" : sha;
 
         const content = await getFileContent(
           octokit,
           owner,
           repo,
-          prFile.filename,
-          sha
+          file.filename,
+          ref
         );
 
-        const filefindings = await reviewFile(
-          prFile.filename,
+        const fileFindings = await reviewFile(
+          file.filename,
           content,
-          prFile.patch
+          file.patch
         );
 
         console.log(
-          `[code_review] ${prFile.filename} → ${filefindings.length} finding(s)`
+          `[code_review] ${file.filename} → ${fileFindings.length} finding(s)`
         );
 
-        for (const f of filefindings) {
+        for (const f of fileFindings) {
           newFindings.push({
             agent: "code_review",
             severity: f.severity,
             confidence: f.confidence,
             title: f.title,
             detail: f.detail,
-            file: prFile.filename,   // ← this is what enables inline PR comments
+            file: file.filename,
             line: f.line,
             fixSuggestion: f.fixSuggestion,
           });
         }
       } catch (fileErr) {
         console.error(
-          `[code_review] Failed to review ${prFile.filename}:`,
+          `[code_review] Failed to review ${file.filename}:`,
           fileErr instanceof Error ? fileErr.message : fileErr
         );
-        // continue to next file
       }
     }
 
-    // ── Save agent result ────────────────────────────────────────────────
     await saveAgentResult(
       state.runUUID,
-      "scoring", // reuse existing enum value — closest match
+      "scoring",
       {
+        mode: isScanMode ? "scan" : "pr",
         filesReviewed: toReview.length,
         findingsCount: newFindings.length,
         files: toReview.map((f) => f.filename),
