@@ -1,18 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Cpu, PieChart as PieIcon, BarChart as BarIcon } from "lucide-react";
+import { Cpu, PieChart as PieIcon } from "lucide-react";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from "recharts";
 import { Finding, AgentInfo, Run } from "../../../../types/orion";
 import { ChartTooltip } from "./shared";
@@ -23,84 +15,85 @@ export interface FindingsChartsProps {
   run?: Run;
 }
 
+const AGENT_COLORS: Record<string, string> = {
+  discovery: "#2563EB",
+  performance: "#7C3AED",
+  scoring: "#0891B2",
+  visualization: "#059669",
+};
+
+const SEV_COLORS = [
+  { name: "Critical", color: "#EF4444" },
+  { name: "High", color: "#F97316" },
+  { name: "Medium", color: "#EAB308" },
+  { name: "Low", color: "#3B82F6" },
+  { name: "Info", color: "#6B7280" },
+];
+
 export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
   const agentBreakdown = agents.map((agent) => {
-    const fills = {
-      discovery: "#2563EB",
-      performance: "#7C3AED",
-      scoring: "#0891B2",
-      visualization: "#059669",
-    };
+    const key = agent.type.replace("_agent", "");
     return {
-      agent: agent.name || agent.type,
-      findings: findings.filter(f => f.agentType === agent.type).length,
-      fill: (fills as any)[agent.type] || "#2563EB"
+      agent: agent.name || key,
+      findings: findings.filter(f => f.agentType?.replace("_agent", "") === key).length,
+      fill: AGENT_COLORS[key] || "#2563EB",
     };
   });
 
   const svMap = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
   if (run?.summary?.bySeverity) {
-    svMap.critical = run.summary.bySeverity.critical || 0;
-    svMap.high     = run.summary.bySeverity.high || 0;
-    svMap.medium   = run.summary.bySeverity.medium || 0;
-    svMap.low      = run.summary.bySeverity.low || 0;
-    svMap.info     = run.summary.bySeverity.info || 0;
+    Object.assign(svMap, run.summary.bySeverity);
   } else {
-    findings.forEach(f => { if (svMap[f.severity] !== undefined) svMap[f.severity]++ });
+    findings.forEach(f => { if (svMap[f.severity] !== undefined) svMap[f.severity]++; });
   }
 
-  const totalFindings = svMap.critical + svMap.high + svMap.medium + svMap.low + svMap.info;
-
-  const sevBreakdown = [
-    { name: "Critical", value: svMap.critical,  color: "#ef4444" },
-    { name: "High",     value: svMap.high,      color: "#f97316" },
-    { name: "Medium",   value: svMap.medium,    color: "#eab308" },
-    { name: "Low",      value: svMap.low,       color: "#3b82f6" },
-    { name: "Info",     value: svMap.info,      color: "#6b7280" },
-  ];
+  const totalFindings = Object.values(svMap).reduce((a, b) => a + b, 0);
+  const sevBreakdown = SEV_COLORS.map((s, i) => ({
+    ...s,
+    value: Object.values(svMap)[i],
+  }));
 
   return (
-    <div className="xl:flex-[2] flex flex-col gap-4">
-      {/* Agent breakdown */}
+    <div className="flex flex-col gap-4">
+
       <motion.div
-        className="bg-white rounded-2xl p-5"
-        style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+        className="card p-5 pt-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35 }}
+        transition={{ delay: 0.33 }}
       >
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-3 mb-5">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "#EFF6FF" }}
+            style={{ background: "var(--accent-light)", border: "1px solid var(--accent-mid)" }}
           >
-            <Cpu size={14} style={{ color: "#2563EB" }} />
+            <Cpu size={14} style={{ color: "var(--accent)" }} />
           </div>
           <div>
-            <h3 className="font-bold text-sm" style={{ color: "#0F172A" }}>
+            <h3 className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
               Findings by Agent
             </h3>
-            <p className="text-xs" style={{ color: "#94A3B8" }}>Which agent found the most</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Which agent found the most</p>
           </div>
         </div>
 
-        <div style={{ height: 140 }}>
+        <div style={{ height: 144 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={agentBreakdown} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+            <BarChart data={agentBreakdown} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E8EDF8" vertical={false} />
               <XAxis
                 dataKey="agent"
-                tick={{ fontSize: 11, fill: "#94A3B8", fontFamily: "DM Sans" }}
+                tick={{ fontSize: 10, fill: "#8B97B5", fontFamily: "DM Sans" }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "DM Sans" }}
+                tick={{ fontSize: 10, fill: "#8B97B5", fontFamily: "DM Sans" }}
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip content={ChartTooltip} cursor={{ fill: "#F0F5FF" }} />
-              <Bar dataKey="findings" radius={[6, 6, 0, 0]} maxBarSize={36}>
+              <Tooltip content={ChartTooltip} cursor={{ fill: "#EEF3FF" }} />
+              <Bar dataKey="findings" radius={[8, 8, 0, 0]} maxBarSize={36}>
                 {agentBreakdown.map((d) => (
                   <Cell key={d.agent} fill={d.fill} />
                 ))}
@@ -110,78 +103,42 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
         </div>
       </motion.div>
 
-      {/* Severity breakdown (Bar Chart) */}
+      {/* ── Severity Distribution ── */}
       <motion.div
-        className="bg-white rounded-2xl p-5"
-        style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+        className="card p-5 pt-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.40 }}
+        transition={{ delay: 0.38 }}
       >
-        <div className="flex items-center gap-2 mb-4">
-           <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-gray-50" style={{ background: "#F8FAFC" }}>
-             <BarIcon size={14} style={{ color: "#475569" }} />
-           </div>
-           <div>
-             <h3 className="font-bold text-sm" style={{ color: "#0F172A" }}>Score Breakdown</h3>
-             <p className="text-xs" style={{ color: "#94A3B8" }}>Severity distribution</p>
-           </div>
-        </div>
-
-        <div style={{ height: 160 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={sevBreakdown} margin={{ top: 10, right: 8, left: -24, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#94A3B8", fontFamily: "DM Sans" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "#94A3B8", fontFamily: "DM Sans" }} axisLine={false} tickLine={false} />
-              <Tooltip cursor={{ fill: "#F0F5FF" }} content={ChartTooltip} />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={36}>
-                {sevBreakdown.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </motion.div>
-
-      {/* Severity donut */}
-      <motion.div
-        className="bg-white rounded-2xl p-5"
-        style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45 }}
-      >
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-3 mb-5">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "#FEF2F2" }}
+            style={{ background: "#F8FAFC", border: "1px solid var(--border)" }}
           >
-            <PieIcon size={14} style={{ color: "#DC2626" }} />
+            <PieIcon size={14} style={{ color: "var(--text-secondary)" }} />
           </div>
           <div>
-            <h3 className="font-bold text-sm" style={{ color: "#0F172A" }}>
-              Total Distribution
+            <h3 className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
+              Severity Distribution
             </h3>
-            <p className="text-xs" style={{ color: "#94A3B8" }}>{totalFindings} total findings</p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              {totalFindings} total findings recorded
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div style={{ width: 120, height: 120, flexShrink: 0 }}>
+        <div className="flex items-center gap-5">
+          {/* Donut */}
+          <div style={{ width: 108, height: 108, flexShrink: 0 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={sevBreakdown}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={32}
-                  outerRadius={50}
+                  cx="50%" cy="50%"
+                  innerRadius={30} outerRadius={50}
                   paddingAngle={3}
                   dataKey="value"
-                  startAngle={90}
-                  endAngle={-270}
+                  startAngle={90} endAngle={-270}
                   stroke="none"
                 >
                   {sevBreakdown.map((d) => (
@@ -193,29 +150,29 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
             </ResponsiveContainer>
           </div>
 
-          <div className="flex flex-col gap-1.5 flex-1">
-            {sevBreakdown.map((d) => (
+          {/* Legend */}
+          <div className="flex flex-col gap-2 flex-1 pt-2">
+            {sevBreakdown.filter(d => (d.value ?? 0) > 0).map((d) => (
               <div key={d.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     style={{ background: d.color }}
                   />
-                  <span className="text-xs font-medium" style={{ color: "#64748B" }}>
+                  <span className="text-xs font-semibold" style={{ color: "#64748B" }}>
                     {d.name}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <div
-                    className="h-1 rounded-full"
+                    className="h-1.5 rounded-full"
                     style={{
-                      width: Math.max(8, totalFindings ? (d.value / totalFindings) * 60 : 0),
-                      background: d.color + "55",
-                      border: `1px solid ${d.color}88`,
+                      width: Math.max(8, totalFindings ? ((d.value ?? 0) / totalFindings) * 50 : 0),
+                      background: d.color + "33",
                     }}
                   />
-                  <span className="text-xs font-bold w-5 text-right" style={{ color: "#0F172A" }}>
-                    {d.value}
+                  <span className="text-xs font-bold w-4 text-right" style={{ color: "#0F172A" }}>
+                    {d.value ?? 0}
                   </span>
                 </div>
               </div>

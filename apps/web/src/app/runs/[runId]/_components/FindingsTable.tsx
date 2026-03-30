@@ -174,13 +174,13 @@ export function FindingsTable({
                           <div
                             className="h-full rounded-full"
                             style={{
-                              width: `${f.confidence}%`,
+                              width: `${(typeof f.confidence === 'number') ? f.confidence : (String(f.confidence).toLowerCase() === 'high' ? 90 : String(f.confidence).toLowerCase() === 'medium' ? 60 : 30)}%`,
                               background: SEV[f.severity]?.color || "#cbd5e1",
                             }}
                           />
                         </div>
-                        <span className="text-xs font-semibold" style={{ color: "#475569" }}>
-                          {f.confidence}%
+                        <span className="text-xs font-semibold uppercase" style={{ color: "#475569" }}>
+                          {typeof f.confidence === 'number' ? `${f.confidence}%` : f.confidence}
                         </span>
                       </div>
                     ) : (

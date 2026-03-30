@@ -41,27 +41,27 @@ export function DiffPanel({ diff }: DiffPanelProps) {
             Diff vs Previous Run
           </h2>
           <p className="text-xs" style={{ color: "#94A3B8" }}>
-            Compared to {diff.previousRunId.slice(0, 8)}...
+            Compared to {diff.previousRunId ? diff.previousRunId.slice(0, 8) : "previous"}...
           </p>
         </div>
       </div>
 
-      <div className="px-5 py-5 grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="px-6 py-6 grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div
-          className="col-span-2 lg:col-span-1 rounded-2xl p-4 flex flex-col items-start"
+          className="rounded-2xl p-5 flex flex-col items-start justify-center"
           style={{ 
             background: isRegression ? "#FEF2F2" : isImprovement ? "#ECFDF5" : "#F8FAFC", 
             border: `1px solid ${isRegression ? "#FECACA" : isImprovement ? "#A7F3D0" : "#E2E8F0"}` 
           }}
         >
-          <div className="text-xs font-semibold uppercase tracking-widest mb-2" 
+          <div className="text-xs font-semibold uppercase tracking-widest mb-3" 
                style={{ color: isRegression ? "#FCA5A5" : isImprovement ? "#6EE7B7" : "#CBD5E1" }}>
             Score Delta
           </div>
-          <div className="flex items-end gap-2">
+          <div className="flex items-baseline gap-2">
             <span
               className="bricolage font-extrabold"
-              style={{ fontSize: 42, lineHeight: 1, color: isRegression ? "#DC2626" : isImprovement ? "#059669" : "#64748B" }}
+              style={{ fontSize: 52, lineHeight: 1, letterSpacing: "-0.02em", color: isRegression ? "#DC2626" : isImprovement ? "#059669" : "#64748B" }}
             >
               {diff.scoreDelta > 0 ? `+${diff.scoreDelta}` : diff.scoreDelta}
             </span>
@@ -75,22 +75,22 @@ export function DiffPanel({ diff }: DiffPanelProps) {
           {
             label: "New Findings",
             value: diff.newCount,
-            icon: <AlertTriangle size={14} />,
+            icon: <AlertTriangle size={15} />,
             bg: "#FFF7ED", border: "#FED7AA", text: "#EA580C", muted: "#FDBA74",
           },
           {
             label: "Resolved",
             value: diff.resolvedCount,
-            icon: <CheckCircle2 size={14} />,
+            icon: <CheckCircle2 size={15} />,
             bg: "#ECFDF5", border: "#A7F3D0", text: "#059669", muted: "#6EE7B7",
           }
         ].map((s) => (
           <div
             key={s.label}
-            className="rounded-2xl p-4 flex flex-col"
+            className="rounded-2xl p-5 flex flex-col justify-center"
             style={{ background: s.bg, border: `1px solid ${s.border}` }}
           >
-            <div className="flex items-center gap-1.5 mb-3">
+            <div className="flex items-center gap-2 mb-4">
               <span style={{ color: s.muted }}>{s.icon}</span>
               <span
                 className="text-xs font-semibold uppercase tracking-widest"
@@ -99,15 +99,17 @@ export function DiffPanel({ diff }: DiffPanelProps) {
                 {s.label}
               </span>
             </div>
-            <span
-              className="bricolage font-extrabold"
-              style={{ fontSize: 38, lineHeight: 1, color: s.text }}
-            >
-              {s.value}
-            </span>
-            <span className="text-xs mt-1.5 font-medium" style={{ color: s.muted }}>
-              findings
-            </span>
+            <div className="flex items-baseline gap-2">
+              <span
+                className="bricolage font-extrabold"
+                style={{ fontSize: 46, lineHeight: 1, letterSpacing: "-0.02em", color: s.text }}
+              >
+                {s.value}
+              </span>
+              <span className="text-sm font-semibold mb-1" style={{ color: s.muted }}>
+                findings
+              </span>
+            </div>
           </div>
         ))}
       </div>

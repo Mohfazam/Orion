@@ -25,6 +25,7 @@ export default function RunDetailPage() {
   const { runId } = useParams<{ runId: string }>();
 
   // Core State
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'compare' | 'logs'>('dashboard');
   const [run, setRun] = useState<Run | null>(null);
   const [isLoadingRun, setIsLoadingRun] = useState(true);
   const [agents, setAgents] = useState<AgentInfo[]>([]);
@@ -285,46 +286,101 @@ export default function RunDetailPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
           <PipelineStepper agents={agents} />
 
-          <div className="flex flex-col xl:flex-row gap-6">
-            <FindingsTable 
-              findings={findings}
-              totalFindings={findingsTotal}
-              sevFilter={sevFilter}
-              onSevFilterChange={setSevFilter}
-              onRowClick={handleRowClick}
-              page={findingsPage}
-              hasNext={hasNext}
-              hasPrev={hasPrev}
-              onPageChange={setFindingsPage}
-            />
-            
-            <FindingsCharts findings={findings} agents={agents} run={run} />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-end gap-2">
-              <input 
-                type="text" 
-                value={compareId}
-                onChange={(e) => setCompareId(e.target.value)}
-                placeholder="Compare Run ID..."
-                className="px-3 py-1.5 text-sm border font-medium outline-none transition-all focus:border-blue-500"
-                style={{ borderColor: "#E2E8F0", borderRadius: 10, minWidth: 180, color: "#0F172A", height: 36 }}
-              />
-              <button 
-                onClick={() => { if (compareId) runsService.getRunDiff(runId, { compareWith: compareId }).then(setDiffData).catch(console.error); }}
-                className="px-4 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-95"
-                style={{ background: "#2563EB", borderRadius: 10, height: 36 }}
+          {/* Tab Navigation */}
+          <div className="flex items-center gap-8" style={{ borderBottom: "1px solid #E2E8F0" }}>
+            {[
+              { id: 'dashboard', label: 'Overview' },
+              { id: 'compare', label: 'Comparison' },
+              { id: 'logs', label: 'Live Logs', badge: localIsLive }
+            ].map(t => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id as any)}
+                className="relative pb-3 text-sm font-bold transition-all outline-none"
+                style={{ color: activeTab === t.id ? "#0F172A" : "#64748B" }}
               >
-                Compare
+                <div className="flex items-center gap-1.5">
+                  {t.label}
+                  {t.badge && (
+                    <span className="relative flex h-2 w-2 ml-0.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: "#22C55E" }} />
+                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#22C55E" }} />
+                    </span>
+                  )}
+                </div>
+                {activeTab === t.id && (
+                  <motion.div
+                    layoutId="activeTabIndicator"
+                    className="absolute -bottom-[1px] left-0 right-0 h-0.5 rounded-t-full"
+                    style={{ background: "#2563EB", zIndex: 10 }}
+                  />
+                )}
               </button>
-            </div>
-            {diffData && <DiffPanel diff={diffData} />}
+            ))}
           </div>
 
-          {localIsLive && (
-            <LiveLogFeed logs={logs} />
-          )}
+          {/* Tab Contents */}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full"
+          >
+            {activeTab === 'dashboard' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <div className="lg:col-span-8 flex flex-col gap-6 w-full">
+                  <FindingsTable 
+                    findings={findings}
+                    totalFindings={findingsTotal}
+                    sevFilter={sevFilter}
+                    onSevFilterChange={setSevFilter}
+                    onRowClick={handleRowClick}
+                    page={findingsPage}
+                    hasNext={hasNext}
+                    hasPrev={hasPrev}
+                    onPageChange={setFindingsPage}
+                  />
+                </div>
+                <div className="lg:col-span-4 flex flex-col gap-6 w-full">
+                  <FindingsCharts findings={findings} agents={agents} run={run} />
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'compare' && (
+              <div className="flex flex-col gap-6 w-full max-w-4xl">
+                <div 
+                  className="flex items-center gap-3 bg-white p-2.5 rounded-2xl" 
+                  style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                >
+                  <input 
+                    type="text" 
+                    value={compareId}
+                    onChange={(e) => setCompareId(e.target.value)}
+                    placeholder="Compare with specific Run ID..."
+                    className="flex-1 px-3 py-2 text-sm font-semibold outline-none bg-transparent"
+                    style={{ color: "#0F172A" }}
+                  />
+                  <button 
+                    onClick={() => { if (compareId) runsService.getRunDiff(runId, { compareWith: compareId }).then(setDiffData).catch(console.error); }}
+                    className="px-5 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 active:scale-95 rounded-xl shrink-0"
+                    style={{ background: "#2563EB", boxShadow: "0 2px 10px rgba(37,99,235,0.25)" }}
+                  >
+                    Compare Run
+                  </button>
+                </div>
+
+                {diffData && <DiffPanel diff={diffData} />}
+              </div>
+            )}
+
+            {activeTab === 'logs' && (
+              <div className="h-[500px]">
+                <LiveLogFeed logs={logs} />
+              </div>
+            )}
+          </motion.div>
 
           <div style={{ height: 32 }} />
         </div>
