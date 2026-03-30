@@ -12,101 +12,109 @@ export interface PipelineStepperProps {
 const AGENT_ORDER = ["discovery", "performance", "scoring", "visualization"];
 
 export function PipelineStepper({ agents }: PipelineStepperProps) {
-  // Always map into the fixed 4 slots using defined fallbacks based on original design
-  const PIPELINE = AGENT_ORDER.map((typeKey, idx) => {
-    const found = agents.find(a => a.type === typeKey);
+  const PIPELINE = AGENT_ORDER.map((typeKey) => {
+    const found = agents.find((a) => (a.agent || a.type) === typeKey);
     const defaults = {
       discovery: { name: "Discovery", desc: "Crawls pages & maps site structure", icon: <ScanLine size={16} /> },
       performance: { name: "Performance", desc: "Audits load speed & resource budget", icon: <Zap size={16} /> },
       scoring: { name: "Scoring", desc: "Weights findings into a 0–100 score", icon: <Target size={16} /> },
-      visualization: { name: "Visualization", desc: "Generates charts and diff analysis", icon: <BarChart2 size={16} /> }
+      visualization: { name: "Visualization", desc: "Generates charts and diff analysis", icon: <BarChart2 size={16} /> },
     } as any;
-    
+
     const d = defaults[typeKey];
-    
+
     return {
       key: typeKey,
       name: found?.name || d.name,
       desc: d.desc,
       icon: d.icon,
       status: found?.status || "queued",
-      duration: found?.durationMs ? formatDuration(found.durationMs) : null
+      duration: found?.durationMs ? formatDuration(found.durationMs) : null,
     };
   });
 
   return (
     <motion.div
-      className="bg-white rounded-2xl p-6"
-      style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+      style={{
+        background: "var(--bg-card)",
+        borderRadius: 16,
+        padding: 24,
+        border: "1px solid var(--border-subtle)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.25, duration: 0.45 }}
     >
-      <div className="flex items-center gap-3 mb-6">
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ background: "#EFF6FF" }}
+          style={{
+            width: 36, height: 36, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "var(--primary-bg)",
+          }}
         >
-          <Cpu size={16} style={{ color: "#2563EB" }} />
+          <Cpu size={16} style={{ color: "var(--primary)" }} />
         </div>
         <div>
-          <h2 className="bricolage font-bold text-base" style={{ color: "#0F172A" }}>
+          <h2 style={{ margin: 0, fontWeight: 700, fontSize: 16, color: "var(--text-main)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>
             Agent Pipeline
           </h2>
-          <p className="text-xs" style={{ color: "#94A3B8" }}>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)" }}>
             4 agents · tracking execution sequence
           </p>
         </div>
       </div>
 
-      <div className="flex gap-0 overflow-x-auto pb-2">
+      <div style={{ display: "flex", gap: 0, overflowX: "auto", paddingBottom: 8, width: "100%" }}>
         {PIPELINE.map((step, index) => {
           const isLast = index === PIPELINE.length - 1;
           const statusConfig = {
-            complete: { ring: "#DBEAFE", bg: "#EFF6FF",  icon: <CheckCircle2 size={14} style={{ color: "#2563EB" }} />, lineColor: "#BFDBFE" },
-            running:  { ring: "#DDD6FE", bg: "#F5F3FF",  icon: <span className="w-3 h-3 rounded-full animate-pulse" style={{ background: "#8B5CF6" }} />, lineColor: "#E2E8F0" },
-            queued:   { ring: "#E2E8F0", bg: "#F8FAFC",  icon: <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#CBD5E1" }} />, lineColor: "#E2E8F0" },
-            failed:   { ring: "#FECACA", bg: "#FEF2F2",  icon: <XCircle size={14} style={{ color: "#DC2626" }} />, lineColor: "#E2E8F0" },
+            complete: { ring: "var(--primary-border)", bg: "var(--primary-bg)", icon: <CheckCircle2 size={14} style={{ color: "var(--primary)" }} />, lineColor: "var(--primary-border-light)" },
+            running: { ring: "#DDD6FE", bg: "#F5F3FF", icon: <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#8B5CF6" }} className="pulse-ring" />, lineColor: "var(--border-muted)" },
+            queued: { ring: "var(--border-muted)", bg: "var(--bg-muted)", icon: <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--text-faint)" }} />, lineColor: "var(--border-muted)" },
+            failed: { ring: "#FECACA", bg: "var(--danger-bg)", icon: <XCircle size={14} style={{ color: "var(--danger-dark)" }} />, lineColor: "var(--border-muted)" },
           };
-          const s = statusConfig[step.status];
+          const s = statusConfig[step.status as keyof typeof statusConfig] || statusConfig.queued;
 
           return (
             <motion.div
               key={step.key}
-              className="flex-1 flex flex-col min-w-[150px]"
+              style={{ flex: "1 1 0%", display: "flex", flexDirection: "column", minWidth: 150 }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + index * 0.1, duration: 0.4 }}
             >
-              <div className="flex items-center">
+              <div style={{ display: "flex", alignItems: "center" }}>
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 z-10"
                   style={{
+                    width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, zIndex: 10,
                     background: s.bg,
                     border: `2px solid ${s.ring}`,
-                    boxShadow: step.status === "complete" ? "0 0 0 4px #EFF6FF" : undefined,
+                    boxShadow: step.status === "complete" ? "0 0 0 4px var(--primary-bg)" : undefined,
                   }}
                 >
                   {s.icon}
                 </div>
                 {!isLast && (
                   <div
-                    className="flex-1 h-0.5 mx-1"
-                    style={{ background: step.status === "complete" ? "#BFDBFE" : "#E2E8F0" }}
+                    style={{
+                      flex: 1, height: 2, margin: "0 4px",
+                      background: step.status === "complete" ? "var(--primary-border-light)" : "var(--border-muted)",
+                    }}
                   />
                 )}
               </div>
 
-              <div className="mt-3 pr-4">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span style={{ color: "#64748B", flexShrink: 0 }}>{step.icon}</span>
-                  <span className="text-sm font-semibold" style={{ color: "#0F172A" }}>{step.name}</span>
+              <div style={{ marginTop: 12, paddingRight: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                  <span style={{ color: "var(--text-muted)", flexShrink: 0, display: "flex" }}>{step.icon}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-main)" }}>{step.name}</span>
                 </div>
-                <p className="text-xs leading-relaxed" style={{ color: "#94A3B8" }}>{step.desc}</p>
+                <p style={{ fontSize: 12, lineHeight: 1.6, margin: 0, color: "var(--text-dim)" }}>{step.desc}</p>
                 {step.duration && (
-                  <div className="flex items-center gap-1 mt-1.5">
-                    <Clock size={10} style={{ color: "#2563EB" }} />
-                    <span className="text-xs font-medium" style={{ color: "#2563EB" }}>{step.duration}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6 }}>
+                    <Clock size={10} style={{ color: "var(--primary)" }} />
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--primary)" }}>{step.duration}</span>
                   </div>
                 )}
               </div>

@@ -59,14 +59,14 @@ const FontStyle = () => (
       font-size: 13px;
     }
 
-    .row-hover:hover { background-color: #f0f5ff; }
+    .row-hover:hover { background-color: var(--primary-bg-alt); }
 
     @keyframes shimmer {
       0%   { background-position: -400px 0; }
       100% { background-position:  400px 0; }
     }
     .shimmer {
-      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background: linear-gradient(90deg, var(--border-light) 25%, var(--border-muted) 50%, var(--border-light) 75%);
       background-size: 400px 100%;
       animation: shimmer 1.4s infinite;
     }
@@ -74,7 +74,7 @@ const FontStyle = () => (
     .input-focus:focus {
       outline: none;
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-      border-color: #2563EB;
+      border-color: var(--primary);
     }
   `}</style>
 );
@@ -230,13 +230,13 @@ export default function DashboardPage() {
         <>
             <FontStyle />
 
-            <div className="min-h-screen" style={{ background: "#F7F9FF" }}>
+            <div className="min-h-screen" style={{ background: "var(--bg-body)" }}>
 
                 {/* ─── NAV ──────────────────────────────────────── */}
                 <NavBar activeCount={activeCount} />
 
                 {/* ─── HERO ─────────────────────────────────────── */}
-                <section className="relative overflow-hidden bg-white" style={{ borderBottom: "1px solid #EFF3FB" }}>
+                <section className="relative overflow-hidden bg-[var(--bg-card)]" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
 
                     {/* Dot grid background */}
                     <div className="dot-bg absolute inset-0 opacity-50 pointer-events-none" />
@@ -267,14 +267,14 @@ export default function DashboardPage() {
                         className="absolute top-8 right-12 opacity-10 pointer-events-none"
                         style={{
                             width: 120, height: 120, borderRadius: "50%",
-                            border: "2px solid #2563EB",
+                            border: "2px solid var(--primary)",
                         }}
                     />
                     <div
                         className="absolute top-14 right-18 opacity-6 pointer-events-none"
                         style={{
                             width: 80, height: 80, borderRadius: "50%",
-                            border: "2px solid #2563EB",
+                            border: "2px solid var(--primary)",
                         }}
                     />
 
@@ -289,9 +289,9 @@ export default function DashboardPage() {
                         >
                             <span
                                 className="flex items-center gap-2 text-xs font-semibold px-4 py-1.5 rounded-full"
-                                style={{ background: "#EFF6FF", color: "#1D4ED8", border: "1px solid #DBEAFE" }}
+                                style={{ background: "var(--primary-bg)", color: "var(--primary-hover)", border: "1px solid var(--primary-border)" }}
                             >
-                                <Zap size={11} style={{ fill: "#1D4ED8" }} />
+                                <Zap size={11} style={{ fill: "var(--primary-hover)" }} />
                                 AI-powered website auditing &nbsp;·&nbsp; v2.4
                             </span>
                         </motion.div>
@@ -299,7 +299,7 @@ export default function DashboardPage() {
                         {/* Headline */}
                         <motion.h1
                             className="bricolage font-extrabold tracking-tight leading-none mb-5"
-                            style={{ fontSize: "clamp(2.4rem, 6vw, 3.75rem)", color: "#0F172A" }}
+                            style={{ fontSize: "clamp(2.4rem, 6vw, 3.75rem)", color: "var(--text-main)" }}
                             initial={{ opacity: 0, y: 28 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
@@ -308,10 +308,10 @@ export default function DashboardPage() {
                             <span
                                 className="italic"
                                 style={{
-                                    color: "#2563EB",
+                                    color: "var(--primary)",
                                     textDecorationLine: "underline",
                                     textDecorationStyle: "wavy",
-                                    textDecorationColor: "#BFDBFE",
+                                    textDecorationColor: "var(--primary-border-light)",
                                     textUnderlineOffset: 6,
                                 }}
                             >
@@ -323,7 +323,7 @@ export default function DashboardPage() {
                         {/* Subheading */}
                         <motion.p
                             className="text-lg leading-relaxed mb-10 max-w-xl mx-auto"
-                            style={{ color: "#64748B" }}
+                            style={{ color: "var(--text-muted)" }}
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.22 }}
@@ -350,7 +350,7 @@ export default function DashboardPage() {
                                 <Globe
                                     size={16}
                                     className="absolute top-1/2 -translate-y-1/2"
-                                    style={{ left: 16, color: inputFocused ? "#2563EB" : "#94A3B8", transition: "color 0.2s" }}
+                                    style={{ left: 16, color: inputFocused ? "var(--primary)" : "var(--text-dim)", transition: "color 0.2s" }}
                                 />
                                 <input
                                     type="url"
@@ -364,11 +364,11 @@ export default function DashboardPage() {
                                     className="input-focus w-full pl-11 pr-4 text-sm"
                                     style={{
                                         height: 56,
-                                        background: "#fff",
-                                        border: "1.5px solid #E2E8F0",
+                                        background: "var(--bg-card)",
+                                        border: "1.5px solid var(--border-muted)",
                                         borderRight: "none",
                                         borderRadius: "16px 0 0 16px",
-                                        color: "#0F172A",
+                                        color: "var(--text-main)",
                                         fontSize: 15,
                                         outline: "none",
                                         paddingLeft: 44,
@@ -383,15 +383,15 @@ export default function DashboardPage() {
                                 disabled={isSubmitting}
                                 className="flex items-center justify-center gap-2 font-semibold text-white whitespace-nowrap"
                                 style={{
-                                    background: isSubmitting ? "#94A3B8" : "#2563EB",
-                                    border: isSubmitting ? "1.5px solid #64748B" : "1.5px solid #1D4ED8",
+                                    background: isSubmitting ? "var(--text-dim)" : "var(--primary)",
+                                    border: isSubmitting ? "1.5px solid var(--text-muted)" : "1.5px solid var(--primary-hover)",
                                     borderRadius: "0 16px 16px 0",
                                     padding: "0 28px",
                                     fontSize: 14,
                                     cursor: isSubmitting ? "not-allowed" : "pointer",
                                     letterSpacing: "0.01em",
                                 }}
-                                whileHover={!isSubmitting ? { background: "#1D4ED8" } : undefined}
+                                whileHover={!isSubmitting ? { background: "var(--primary-hover)" } : undefined}
                                 whileTap={!isSubmitting ? { scale: 0.97 } : undefined}
                             >
                                 {isSubmitting ? <Activity size={14} className="animate-spin text-white" /> : <Play size={14} style={{ fill: "white" }} />}
@@ -408,7 +408,7 @@ export default function DashboardPage() {
                         {/* Hint row */}
                         <motion.div
                             className="flex items-center justify-center gap-5 mt-4 text-xs"
-                            style={{ color: "#94A3B8" }}
+                            style={{ color: "var(--text-dim)" }}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.55 }}
@@ -425,7 +425,7 @@ export default function DashboardPage() {
                 </section>
 
                 {/* ─── MAIN CONTENT ─────────────────────────────── */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+                <div className="max-w-[1536px] mx-auto px-4 sm:px-6 py-10 space-y-6">
 
                     {/* LAST RUN BANNER */}
                     <LastRunBanner isLoading={isLoadingOverview} lastRun={lastRun} />
@@ -442,7 +442,7 @@ export default function DashboardPage() {
                             label="Total Runs"
                             value={isLoadingOverview ? "—" : overviewStats.total}
                             sub="All time"
-                            accent="#2563EB"
+                            accent="var(--primary)"
                             icon={<BarChart3 size={15} />}
                         />
                         <StatCard
@@ -450,8 +450,8 @@ export default function DashboardPage() {
                             label="Passed"
                             value={isLoadingOverview ? "—" : overviewStats.passed}
                             sub={isLoadingOverview || overviewStats.total === 0 ? "—" : `${Math.round((overviewStats.passed / overviewStats.total) * 100)}% pass rate`}
-                            accent="#059669"
-                            subColor="#10B981"
+                            accent="var(--success-dark)"
+                            subColor="var(--success)"
                             icon={<CheckCircle2 size={15} />}
                         />
                         <StatCard
@@ -459,8 +459,8 @@ export default function DashboardPage() {
                             label="Failed"
                             value={isLoadingOverview ? "—" : overviewStats.failed}
                             sub={isLoadingOverview || overviewStats.total === 0 ? "—" : `${Math.round((overviewStats.failed / overviewStats.total) * 100)}% fail rate`}
-                            accent="#DC2626"
-                            subColor="#EF4444"
+                            accent="var(--danger-dark)"
+                            subColor="var(--danger)"
                             icon={<XCircle size={15} />}
                         />
 
@@ -470,10 +470,10 @@ export default function DashboardPage() {
                         <motion.div
                             variants={fadeUp}
                             custom={4}
-                            className="bg-white rounded-2xl p-5 col-span-2 md:col-span-3 lg:col-span-1"
-                            style={{ border: "1px solid #F1F5F9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                            className="bg-[var(--bg-card)] rounded-2xl p-5 col-span-2 md:col-span-3 lg:col-span-1"
+                            style={{ border: "1px solid var(--border-light)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                         >
-                            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#94A3B8" }}>
+                            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-dim)" }}>
                                 Pass / Fail
                             </span>
                             <div style={{ height: 80, marginTop: 4 }}>
@@ -494,8 +494,8 @@ export default function DashboardPage() {
                                                 endAngle={-270}
                                                 stroke="none"
                                             >
-                                                <Cell fill="#10B981" />
-                                                <Cell fill="#EF4444" />
+                                                <Cell fill="var(--success)" />
+                                                <Cell fill="var(--danger)" />
                                             </Pie>
                                             <Tooltip content={<CustomTooltip />} />
                                         </PieChart>
@@ -503,12 +503,12 @@ export default function DashboardPage() {
                                 )}
                             </div>
                             <div className="flex justify-center gap-4 mt-1">
-                                <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#64748B" }}>
-                                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "#10B981" }} />
+                                <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "var(--success)" }} />
                                     Pass{!isLoadingOverview && ` · ${overviewStats.passed}`}
                                 </span>
-                                <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#64748B" }}>
-                                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "#EF4444" }} />
+                                <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "var(--danger)" }} />
                                     Fail{!isLoadingOverview && ` · ${overviewStats.failed}`}
                                 </span>
                             </div>
@@ -545,7 +545,7 @@ export default function DashboardPage() {
                                 icon: <Zap size={16} />,
                                 title: "Fast AI Analysis",
                                 desc: "Agents crawl your pages, test interactions, and flag issues in under 3 minutes.",
-                                accent: "#2563EB",
+                                accent: "var(--primary)",
                             },
                             {
                                 icon: <BarChart3 size={16} />,
@@ -557,13 +557,13 @@ export default function DashboardPage() {
                                 icon: <Activity size={16} />,
                                 title: "Track Over Time",
                                 desc: "Run on every deploy to catch regressions before they affect real users.",
-                                accent: "#059669",
+                                accent: "var(--success-dark)",
                             },
                         ].map((card, i) => (
                             <div
                                 key={i}
-                                className="bg-white rounded-2xl p-5 flex gap-4 items-start"
-                                style={{ border: "1px solid #F1F5F9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                                className="bg-[var(--bg-card)] rounded-2xl p-5 flex gap-4 items-start"
+                                style={{ border: "1px solid var(--border-light)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                             >
                                 <div
                                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
@@ -572,10 +572,10 @@ export default function DashboardPage() {
                                     {card.icon}
                                 </div>
                                 <div>
-                                    <div className="font-semibold text-sm mb-1" style={{ color: "#0F172A" }}>
+                                    <div className="font-semibold text-sm mb-1" style={{ color: "var(--text-main)" }}>
                                         {card.title}
                                     </div>
-                                    <div className="text-xs leading-relaxed" style={{ color: "#94A3B8" }}>
+                                    <div className="text-xs leading-relaxed" style={{ color: "var(--text-dim)" }}>
                                         {card.desc}
                                     </div>
                                 </div>
@@ -588,9 +588,9 @@ export default function DashboardPage() {
                 {/* ─── FOOTER ───────────────────────────────────── */}
                 <footer
                     className="text-center py-8 text-xs"
-                    style={{ color: "#CBD5E1", borderTop: "1px solid #F1F5F9", marginTop: 8 }}
+                    style={{ color: "var(--text-faint)", borderTop: "1px solid var(--border-light)", marginTop: 8 }}
                 >
-                    <span className="bricolage font-bold" style={{ color: "#94A3B8" }}>Orion</span>
+                    <span className="bricolage font-bold" style={{ color: "var(--text-dim)" }}>Orion</span>
                     &nbsp;·&nbsp; AI-powered website auditing &nbsp;·&nbsp; © 2025
                 </footer>
 

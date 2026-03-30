@@ -26,7 +26,7 @@ export function LiveLogFeed({ logs }: LiveLogFeedProps) {
   return (
     <motion.div
       className="bg-slate-900 rounded-2xl overflow-hidden flex flex-col"
-      style={{ border: "1px solid #1E293B", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", height: 320 }}
+      style={{ border: "1px solid var(--text-strong)", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", height: 320 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
@@ -34,10 +34,10 @@ export function LiveLogFeed({ logs }: LiveLogFeedProps) {
       {/* Header */}
       <div
         className="px-4 py-3 flex items-center gap-3"
-        style={{ borderBottom: "1px solid #334155", background: "#0F172A" }}
+        style={{ borderBottom: "1px solid var(--text-base)", background: "var(--text-main)" }}
       >
         <Terminal size={14} style={{ color: "#38BDF8" }} />
-        <span className="text-xs font-mono font-bold uppercase tracking-widest" style={{ color: "#94A3B8" }}>
+        <span className="text-xs font-mono font-bold uppercase tracking-widest" style={{ color: "var(--text-dim)" }}>
           Live Log Stream
         </span>
         <div className="ml-auto flex items-center gap-1.5">
@@ -53,14 +53,14 @@ export function LiveLogFeed({ logs }: LiveLogFeedProps) {
       <div 
         ref={containerRef}
         className="flex-1 overflow-y-auto p-4 space-y-2 font-mono text-xs"
-        style={{ color: "#CBD5E1" }}
+        style={{ color: "var(--text-faint)" }}
       >
         {logs.length === 0 ? (
           <div className="text-slate-500 italic">Waiting for agents to emit logs...</div>
         ) : (
           logs.map((log, i) => (
             <div key={i} className="flex gap-3 leading-relaxed hover:bg-slate-800/50 px-2 py-1 -mx-2 rounded transition-colors">
-              <span className="flex-shrink-0" style={{ color: "#64748B" }}>
+              <span className="flex-shrink-0" style={{ color: "var(--text-muted)" }}>
                 [{new Date(log.timestamp).toISOString().substring(11, 19)}]
               </span>
               <span className="flex-shrink-0 w-24 text-right" style={{ color: "#38BDF8" }}>

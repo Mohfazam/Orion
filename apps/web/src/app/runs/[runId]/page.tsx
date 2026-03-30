@@ -13,6 +13,7 @@ import { useRunSocket } from "../../../hooks/useRunSocket";
 import { usePolling } from "../../../hooks/usePolling";
 
 import { FontStyle, StatusBadge } from "./_components/shared";
+import { ThemeToggle } from "../../_components/ThemeToggle";
 import { RunHero } from "./_components/RunHero";
 import { PipelineStepper } from "./_components/PipelineStepper";
 import { FindingsTable, SevFilter } from "./_components/FindingsTable";
@@ -57,7 +58,7 @@ export default function RunDetailPage() {
       agentsService.getRunAgents(runId).catch(e => { console.error(e); return []; })
     ]).then(([rData, aData]) => {
       setRun(rData);
-      setAgents(aData || []);
+      setAgents(rData?.agentResults || (Array.isArray(aData) ? aData : []) || []);
       
       if (rData?.prevRunId) {
         runsService.getRunDiff(rData.runId, { previousRunId: rData.prevRunId })
@@ -100,17 +101,17 @@ export default function RunDetailPage() {
       const eventType = ev.type || ev.event;
       if (eventType === 'agent_started' || eventType === 'node.started') {
         const agentName = ev.agent || (ev.node ? ev.node.replace(/_agent$/, '') : '');
-        setAgents(prev => prev.map(a => a.type === agentName ? { ...a, status: 'running' } : a));
+        setAgents(prev => prev.map(a => (a.agent || a.type) === agentName ? { ...a, status: 'running' } : a));
       } 
       else if (eventType === 'agent_completed' || eventType === 'node.complete') {
         const agentName = ev.agent || (ev.node ? ev.node.replace(/_agent$/, '') : '');
         setAgents(prev => prev.map(a => 
-          a.type === agentName ? { ...a, status: 'complete', durationMs: ev.durationMs, score: ev.score } : a
+          (a.agent || a.type) === agentName ? { ...a, status: 'complete', durationMs: ev.durationMs, score: ev.score } : a
         ));
       } 
       else if (eventType === 'node.failed') {
         const agentName = (ev.node || '').replace(/_agent$/, '');
-        setAgents(prev => prev.map(a => a.type === agentName ? { ...a, status: 'failed' } : a));
+        setAgents(prev => prev.map(a => (a.agent || a.type) === agentName ? { ...a, status: 'failed' } : a));
       }
       else if (eventType === 'score_updated') {
         setRun(prev => prev ? { ...prev, overallScore: ev.meta?.score } : prev);
@@ -191,7 +192,7 @@ export default function RunDetailPage() {
 
   if (isLoadingRun) {
     return (
-      <div className="min-h-screen bg-[#F7F9FF] flex items-center justify-center font-semibold text-slate-500 text-sm">
+      <div className="min-h-screen bg-[var(--bg-body)] flex items-center justify-center font-semibold text-slate-500 text-sm">
         <div className="flex flex-col items-center gap-3">
           <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
           Loading Run Profile...
@@ -202,7 +203,7 @@ export default function RunDetailPage() {
 
   if (!run) {
     return (
-      <div className="min-h-screen bg-[#F7F9FF] flex items-center justify-center font-semibold text-slate-500">
+      <div className="min-h-screen bg-[var(--bg-body)] flex items-center justify-center font-semibold text-slate-500">
         Run Profile {runId} not found.
       </div>
     );
@@ -214,55 +215,55 @@ export default function RunDetailPage() {
   return (
     <>
       <FontStyle />
-      <div className="min-h-screen" style={{ background: "#F7F9FF" }}>
+      <div className="min-h-screen" style={{ background: "var(--bg-body)" }}>
         
         <nav
-          className="sticky top-0 z-50 flex items-center justify-between px-5 py-3"
+          className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-12 py-3"
           style={{
-            background: "rgba(255,255,255,0.88)",
+            background: "var(--glass-bg)",
             backdropFilter: "blur(18px)",
             WebkitBackdropFilter: "blur(18px)",
-            borderBottom: "1px solid #EFF3FB",
+            borderBottom: "1px solid var(--border-subtle)",
             height: 56,
           }}
         >
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <motion.a
-              href="/"
+              href="/runs"
               className="flex items-center gap-2 text-sm font-medium transition-colors"
-              style={{ color: "#64748B", textDecoration: "none" }}
-              whileHover={{ color: "#1D4ED8" }}
+              style={{ color: "var(--text-muted)", textDecoration: "none" }}
+              whileHover={{ color: "var(--primary-hover)" }}
             >
               <div
                 className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: "#F0F5FF", border: "1px solid #DBEAFE" }}
+                style={{ background: "var(--primary-bg-alt)", border: "1px solid var(--primary-border)" }}
               >
-                <ArrowLeft size={13} style={{ color: "#2563EB" }} />
+                <ArrowLeft size={13} style={{ color: "var(--primary)" }} />
               </div>
               <span className="hidden sm:inline">All runs</span>
             </motion.a>
 
-            <div style={{ width: 1, height: 20, background: "#E2E8F0" }} />
+            <div style={{ width: 1, height: 20, background: "var(--border-muted)" }} />
 
             <div className="flex items-center gap-2">
               <div
                 className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: "#2563EB" }}
+                style={{ background: "var(--primary)" }}
               >
-                <Target size={13} style={{ color: "#fff" }} />
+                <Target size={13} style={{ color: "var(--text-inverse)" }} />
               </div>
-              <span className="bricolage font-bold text-lg tracking-tight" style={{ color: "#0F172A" }}>
+              <span className="bricolage font-bold text-lg tracking-tight" style={{ color: "var(--text-main)" }}>
                 Orion
               </span>
             </div>
 
-            <div className="hidden md:flex items-center gap-1 text-xs" style={{ color: "#94A3B8" }}>
+            <div className="hidden md:flex items-center gap-1 text-xs" style={{ color: "var(--text-dim)" }}>
               <ChevronRight size={13} />
-              <span className="font-medium" style={{ color: "#64748B" }}>Runs</span>
+              <span className="font-medium" style={{ color: "var(--text-muted)" }}>Runs</span>
               <ChevronRight size={13} />
               <span
                 className="font-mono font-semibold px-1.5 py-0.5 rounded"
-                style={{ background: "#F0F5FF", color: "#2563EB", fontSize: 11 }}
+                style={{ background: "var(--primary-bg-alt)", color: "var(--primary)", fontSize: 11 }}
               >
                 {run.runId || run.id}
               </span>
@@ -270,22 +271,17 @@ export default function RunDetailPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <StatusBadge status={run.status} />
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
-              style={{ background: "linear-gradient(135deg, #3B82F6, #1D4ED8)" }}
-            >
-              T
-            </div>
           </div>
         </nav>
 
         <RunHero run={run} onCancel={handleCancel} />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div style={{ maxWidth: 1536, margin: "0 auto", padding: "32px 24px", display: "flex", flexDirection: "column", gap: 24 }}>
           <PipelineStepper agents={agents} />
 
-          <div className="flex flex-col xl:flex-row gap-6">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
             <FindingsTable 
               findings={findings}
               totalFindings={findingsTotal}
@@ -301,20 +297,18 @@ export default function RunDetailPage() {
             <FindingsCharts findings={findings} agents={agents} run={run} />
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-end gap-2">
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
               <input 
                 type="text" 
                 value={compareId}
                 onChange={(e) => setCompareId(e.target.value)}
                 placeholder="Compare Run ID..."
-                className="px-3 py-1.5 text-sm border font-medium outline-none transition-all focus:border-blue-500"
-                style={{ borderColor: "#E2E8F0", borderRadius: 10, minWidth: 180, color: "#0F172A", height: 36 }}
+                style={{ padding: "6px 12px", fontSize: 14, fontWeight: 500, outline: "none", border: "1px solid var(--border-muted)", borderRadius: 10, minWidth: 180, color: "var(--text-main)", height: 36 }}
               />
               <button 
                 onClick={() => { if (compareId) runsService.getRunDiff(runId, { compareWith: compareId }).then(setDiffData).catch(console.error); }}
-                className="px-4 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-95"
-                style={{ background: "#2563EB", borderRadius: 10, height: 36 }}
+                style={{ cursor: "pointer", padding: "6px 16px", fontSize: 14, fontWeight: 600, color: "var(--text-inverse)", background: "var(--primary)", borderRadius: 10, height: 36, border: "none" }}
               >
                 Compare
               </button>

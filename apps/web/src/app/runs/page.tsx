@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { ThemeToggle } from "../_components/ThemeToggle";
 import { Target, LayoutDashboard, List, BookOpen, GitFork, Play } from "lucide-react";
 import { runsService } from "../../services/runs.service";
 import { Run } from "../../types/orion";
@@ -28,17 +29,17 @@ const FontStyle = () => (
       background-size: 24px 24px;
     }
 
-    .row-hover:hover { background-color: #f0f5ff; cursor: pointer; }
+    .row-hover:hover { background-color: var(--primary-bg-alt); cursor: pointer; }
 
     .input-glow:focus {
       outline: none;
       box-shadow: 0 0 0 3px rgba(37,99,235,0.14);
-      border-color: #2563EB !important;
+      border-color: var(--primary) !important;
     }
 
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #F8FAFF; }
-    ::-webkit-scrollbar-thumb { background: #DBEAFE; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb { background: var(--primary-border); border-radius: 999px; }
 
     .pill-btn {
       display: inline-flex; align-items: center; gap: 6px;
@@ -49,14 +50,14 @@ const FontStyle = () => (
     }
     .pill-btn:hover { transform: translateY(-1px); }
     .pill-active {
-      background: #2563EB; color: #fff;
+      background: var(--primary); color: #fff;
       box-shadow: 0 2px 10px rgba(37,99,235,0.28);
     }
     .pill-inactive {
-      background: #F8FAFC; color: #64748B;
-      border: 1px solid #E2E8F0;
+      background: var(--bg-muted); color: var(--text-muted);
+      border: 1px solid var(--border-muted);
     }
-    .pill-inactive:hover { border-color: #BFDBFE; color: #1D4ED8; }
+    .pill-inactive:hover { border-color: var(--primary-border-light); color: var(--primary-hover); }
     
     @keyframes ping {
       75%, 100% { transform: scale(1.8); opacity: 0; }
@@ -126,7 +127,7 @@ export default function RunsPage() {
     <>
       <FontStyle />
 
-      <div style={{ minHeight: "100vh", background: "#F7F9FF" }}>
+      <div style={{ minHeight: "100vh", background: "var(--bg-body)" }}>
         {/* NAV */}
         <nav
           style={{
@@ -136,57 +137,26 @@ export default function RunsPage() {
             background: "rgba(255,255,255,0.88)",
             backdropFilter: "blur(18px)",
             WebkitBackdropFilter: "blur(18px)",
-            borderBottom: "1px solid #EFF3FB",
+            borderBottom: "1px solid var(--border-subtle)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, background: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Target size={15} style={{ color: "#fff" }} />
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Target size={15} style={{ color: "var(--text-inverse)" }} />
             </div>
-            <span className="bricolage" style={{ fontWeight: 800, fontSize: 19, color: "#0F172A", letterSpacing: "-0.02em" }}>
+            <span className="bricolage" style={{ fontWeight: 800, fontSize: 19, color: "var(--text-main)", letterSpacing: "-0.02em" }}>
               Orion
             </span>
-            <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "#EFF6FF", color: "#3B82F6", border: "1px solid #DBEAFE", marginLeft: 2 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: "var(--primary-bg)", color: "var(--primary-light)", border: "1px solid var(--primary-border)", marginLeft: 2 }}>
               Beta
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            {[
-              { label: "Dashboard",   icon: <LayoutDashboard size={13} />, href: "/" },
-              { label: "Runs",        icon: <List size={13} />,            href: "/runs" },
-              { label: "Repos",       icon: <GitFork size={13} />,         href: "/repos" },
-              { label: "Docs",        icon: <BookOpen size={13} />,        href: "/docs" },
-            ].map((item) => {
-              const isActive = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    fontSize: 13, fontWeight: isActive ? 700 : 500,
-                    padding: "6px 13px", borderRadius: 10,
-                    textDecoration: "none",
-                    background: isActive ? "#EFF6FF" : "transparent",
-                    color: isActive ? "#1D4ED8" : "#64748B",
-                    border: isActive ? "1px solid #DBEAFE" : "1px solid transparent",
-                    transition: "all 0.14s",
-                  }}
-                >
-                  {item.icon} {item.label}
-                </Link>
-              );
-            })}
-          </div>
-
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg, #3B82F6, #1D4ED8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 800 }}>
-            T
-          </div>
+          <ThemeToggle />
         </nav>
 
         {/* MAIN CONTENT */}
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 20px 64px" }}>
+        <div style={{ maxWidth: 1536, margin: "0 auto", padding: "32px 20px 64px" }}>
 
           {/* PAGE HEADER */}
           <motion.div
@@ -196,12 +166,12 @@ export default function RunsPage() {
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           >
             <div>
-              <h1 className="bricolage" style={{ fontSize: 32, fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em", marginBottom: 4 }}>
+              <h1 className="bricolage" style={{ fontSize: 32, fontWeight: 800, color: "var(--text-main)", letterSpacing: "-0.02em", marginBottom: 4 }}>
                 All Runs
               </h1>
-              <p style={{ fontSize: 14, color: "#94A3B8", fontWeight: 500 }}>
+              <p style={{ fontSize: 14, color: "var(--text-dim)", fontWeight: 500 }}>
                 Every audit run across all your sites —&nbsp;
-                <span style={{ color: "#2563EB", fontWeight: 700 }}>{totalCount} total</span>
+                <span style={{ color: "var(--primary)", fontWeight: 700 }}>{totalCount} total</span>
               </p>
             </div>
 
@@ -211,7 +181,7 @@ export default function RunsPage() {
               whileTap={{ scale: 0.97 }}
               style={{
                 display: "flex", alignItems: "center", gap: 8,
-                background: "#2563EB", color: "#fff",
+                background: "var(--primary)", color: "var(--text-inverse)",
                 fontWeight: 700, fontSize: 14,
                 padding: "11px 22px", borderRadius: 14,
                 border: "none", cursor: "pointer",
