@@ -3,6 +3,7 @@ import { db, connectedRepos, runs } from "@repo/db";
 import { eq, desc } from "drizzle-orm";
 import { runAgents } from "@repo/agents";
 import { nanoid } from "nanoid";
+import crypto from "crypto";
 
 const success = (res: Response, data: unknown, status = 200): void => {
   res.status(status).json({ success: true, data });
@@ -187,30 +188,35 @@ export const scanRepo = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const runId   = `run_${nanoid(10)}`;
-  const runUUID = crypto.randomUUID();
+  const runId = `run_${nanoid(10)}`;
 
-  await db.insert(runs).values({
-    id:          runUUID,
-    runId,
-    mode:        "ci",
-    status:      "queued",
-    url:         stagingUrl,
-    currentNode: "discovery_agent",
-    ciContext: {
-      // NOTE: no `pr` field — agents use its absence to detect scan mode
-      owner,
-      repo,
-      sha:    "main",
-      branch: "main",
-    },
-    createdAt: new Date(),
-  });
+  const [newRun] = await db
+    .insert(runs)
+    .values({
+      runId,
+      mode:        "ci",
+      status:      "queued",
+      url:         stagingUrl,
+      currentNode: "discovery_agent",
+      ciContext: {
+        // NOTE: no `pr` field — agents use its absence to detect scan mode
+        owner,
+        repo,
+        sha:    "main",
+        branch: "main",
+      },
+    })
+    .returning();
+
+  if (!newRun) {
+    fail(res, "DB_ERROR", "Failed to create run record.", 500);
+    return;
+  }
 
   // Fire pipeline in background — do not await
-  runAgents(runId, runUUID, stagingUrl, "ci").catch((err) => {
-    console.error(`[scanRepo] Pipeline error for ${runId}:`, err);
+  runAgents(newRun.runId, newRun.id, stagingUrl, "ci").catch((err) => {
+    console.error(`[scanRepo] Pipeline error for ${newRun.runId}:`, err);
   });
 
-  success(res, { runId, runUUID });
+  success(res, { runId: newRun.runId, runUUID: newRun.id });
 };

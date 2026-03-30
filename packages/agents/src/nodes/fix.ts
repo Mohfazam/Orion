@@ -15,7 +15,6 @@ const REVIEWABLE_EXTENSIONS = [
   ".html", ".css", ".scss",
 ];
 
-// Search these dirs in order — same as codeReview.ts
 const SOURCE_DIRS = [
   "src", "app", "pages", "components",
   "lib", "utils", "hooks", "api", "",
@@ -164,7 +163,6 @@ async function createPullRequest(
   }
 }
 
-// Searches SOURCE_DIRS in order and collects up to 10 real source files
 async function getRepoFiles(
   octokit: Octokit,
   owner: string,
@@ -199,7 +197,6 @@ async function getRepoFiles(
         }
       }
     } catch {
-      // Directory doesn't exist in this repo — silently skip
       continue;
     }
   }
@@ -209,8 +206,7 @@ async function getRepoFiles(
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-// Performance agent findings use URLs as file paths (e.g. "https://sol4-u.vercel.app/")
-// These are NOT real GitHub file paths — filter them out
+// Performance agent findings use page URLs as file paths — not real GitHub paths
 const isRealFilePath = (file?: string): boolean => {
   if (!file) return false;
   if (file.startsWith("http://") || file.startsWith("https://")) return false;
@@ -261,56 +257,49 @@ export async function fixAgent(state: OrionState): Promise<OrionState> {
       return state;
     }
 
-    const octokit   = getOctokit(repoRow.installationId);
+    const octokit    = getOctokit(repoRow.installationId);
     const isScanMode = !pr;
 
-    // ── Get files to consider ──────────────────────────────────────────
-    let filesToConsider: string[];
+    // ── Select findings to fix ─────────────────────────────────────────
+    let toFix: typeof state.findings;
 
     if (isScanMode) {
-      console.log("[fix_agent] Scan mode — searching source directories on main branch");
-      filesToConsider = await getRepoFiles(octokit, owner, repo, "main");
-    } else {
-      console.log(`[fix_agent] PR mode — reading files from PR #${pr}`);
-      filesToConsider = await getPRFiles(octokit, owner, repo, pr!);
-    }
-
-    console.log(`[fix_agent] ${filesToConsider.length} file(s) available to fix`);
-
-    // ── Filter findings — real file paths only, matched against repo files ─
-    const actionableFindings = state.findings.filter(
-      (f) =>
-        (f.severity === "critical" || f.severity === "high") &&
-        isRealFilePath(f.file) &&
-        filesToConsider.some(
-          (p) => f.file!.includes(p) || p.includes(f.file!)
+      // Scan mode: take any critical/high finding with a real file path
+      // No need to cross-check against repo file list — just attempt it directly
+      toFix = state.findings
+        .filter(
+          (f) =>
+            (f.severity === "critical" || f.severity === "high") &&
+            isRealFilePath(f.file)
         )
-    );
+        .slice(0, MAX_FILES_TO_FIX);
 
-    // In scan mode: also grab high/critical findings with real paths not matched above
-    const extraFindings = isScanMode
-      ? state.findings.filter(
+      console.log(
+        `[fix_agent] Scan mode — ${toFix.length} critical/high finding(s) with real file paths`
+      );
+    } else {
+      // PR mode: only fix files that were actually changed in the PR
+      const prFiles = await getPRFiles(octokit, owner, repo, pr!);
+      toFix = state.findings
+        .filter(
           (f) =>
             (f.severity === "critical" || f.severity === "high") &&
             isRealFilePath(f.file) &&
-            f.fixSuggestion &&
-            !actionableFindings.includes(f)
+            prFiles.some(
+              (p) => f.file!.includes(p) || p.includes(f.file!)
+            )
         )
-      : [];
+        .slice(0, MAX_FILES_TO_FIX);
 
-    const allActionable = [...actionableFindings, ...extraFindings];
+      console.log(
+        `[fix_agent] PR mode — ${toFix.length} finding(s) matched changed files`
+      );
+    }
 
-    console.log(
-      `[fix_agent] ${actionableFindings.length} matched + ${extraFindings.length} extra = ${allActionable.length} actionable finding(s)`
-    );
-
-    if (allActionable.length === 0) {
+    if (toFix.length === 0) {
       console.log("[fix_agent] No actionable findings to fix.");
       return state;
     }
-
-    const toFix = allActionable.slice(0, MAX_FILES_TO_FIX);
-    console.log(`[fix_agent] Attempting to fix ${toFix.length} finding(s).`);
 
     // ── Scan mode: create a new branch ────────────────────────────────
     let fixBranch = branch;
@@ -335,6 +324,8 @@ export async function fixAgent(state: OrionState): Promise<OrionState> {
     for (const finding of toFix) {
       try {
         const fileRef = isScanMode ? "main" : sha;
+
+        console.log(`[fix_agent] Reading ${finding.file} at ref ${fileRef}...`);
 
         const fileContent = await getFileContent(
           octokit, owner, repo, finding.file!, fileRef

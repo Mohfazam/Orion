@@ -46,7 +46,7 @@ RULES:
 1. discovery_agent MUST always run first.
 2. performance_agent runs after discovery_agent.
 3. code_review_agent runs after performance_agent — ONLY if mode is "ci".
-4. scoring_agent runs after all testing agents complete.
+4. scoring_agent runs after all testing agents complete (including code_review_agent in CI mode).
 5. After scoring_agent: suggest fix_agent if it is in remainingAgents.
 6. visualization_agent MUST always run last — never skip it, never signal END before it runs.
 7. NEVER suggest an agent already in completedAgents.
@@ -102,23 +102,37 @@ const getHardCodedNext = (
 ): AgentName | null => {
   const done = (a: AgentName) => completedAgents.includes(a);
 
-  // visualization_agent must always run last — force it if everything else is done
+  // In CI mode, code_review_agent MUST complete before scoring or fixing.
+  // This prevents scoring/fix from running on incomplete findings.
+  const codeReviewDone = state.mode !== "ci" || done("code_review_agent");
+
+  // Force scoring_agent once all testing agents are done
+  if (
+    done("performance_agent") &&
+    codeReviewDone &&
+    !done("scoring_agent")
+  ) {
+    return "scoring_agent";
+  }
+
+  // Force fix_agent: CI mode + score below threshold + code_review done + scoring done
+  if (
+    state.mode === "ci" &&
+    state.overallScore < PASS_THRESHOLD &&
+    done("code_review_agent") &&
+    done("scoring_agent") &&
+    !done("fix_agent")
+  ) {
+    return "fix_agent";
+  }
+
+  // Force visualization_agent last — once everything else is settled
   if (
     done("scoring_agent") &&
     (done("fix_agent") || state.mode !== "ci" || state.overallScore >= PASS_THRESHOLD) &&
     !done("visualization_agent")
   ) {
     return "visualization_agent";
-  }
-
-  // fix_agent must run if: CI mode, score below threshold, scoring done, not yet run
-  if (
-    state.mode === "ci" &&
-    state.overallScore < PASS_THRESHOLD &&
-    done("scoring_agent") &&
-    !done("fix_agent")
-  ) {
-    return "fix_agent";
   }
 
   return null; // let LLM decide
@@ -181,7 +195,7 @@ export const runOrchestrated = async (
         console.log(`[orchestrator] focus: ${decision.focus}`);
       }
 
-      // ── LLM signalled END — but only honour it if viz_agent is done ──────
+      // ── LLM signalled END — only honour it if viz_agent is done ──────────
       if (decision.next === "END") {
         if (!completedAgents.includes("visualization_agent")) {
           console.warn(
@@ -247,7 +261,7 @@ export const runOrchestrated = async (
         failedAgents.push({ agent: agentName, attempts: 1 });
       }
 
-      state = { ...state, error: `${agentName} failed: ${errorMsg}` };
+      state = { ...state, error: `${agentName}: ${errorMsg}` };
     }
   }
 
