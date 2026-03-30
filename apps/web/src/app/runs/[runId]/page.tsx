@@ -289,13 +289,13 @@ export default function RunDetailPage() {
           {/* Tab Navigation */}
           <div className="flex items-center gap-8" style={{ borderBottom: "1px solid #E2E8F0" }}>
             {[
-              { id: 'dashboard', label: 'Overview' },
-              { id: 'compare', label: 'Comparison' },
-              { id: 'logs', label: 'Live Logs', badge: localIsLive }
+              { id: 'dashboard' as const, label: 'Overview' },
+              { id: 'compare' as const, label: 'Comparison' },
+              { id: 'logs' as const, label: 'Live Logs', badge: localIsLive }
             ].map(t => (
               <button
                 key={t.id}
-                onClick={() => setActiveTab(t.id as any)}
+                onClick={() => setActiveTab(t.id)}
                 className="relative pb-3 text-sm font-bold transition-all outline-none"
                 style={{ color: activeTab === t.id ? "#0F172A" : "#64748B" }}
               >
