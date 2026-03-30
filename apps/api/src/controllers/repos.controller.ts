@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { db, connectedRepos, runs } from "@repo/db";
 import { eq, desc } from "drizzle-orm";
+import { runAgents } from "@repo/agents";
+import { nanoid } from "nanoid";
 
 const success = (res: Response, data: unknown, status = 200): void => {
   res.status(status).json({ success: true, data });
@@ -160,4 +162,55 @@ export const repoCallback = async (req: Request, res: Response): Promise<void> =
   }
 
   res.redirect(`http://localhost:3000/connect/callback?installation_id=${installation_id}`);
+};
+
+// ─── POST /repos/:repoId/scan ─────────────────────────────────────────────────
+
+export const scanRepo = async (req: Request, res: Response): Promise<void> => {
+  const repoId = String(req.params["repoId"]);
+
+  const [repoRow] = await db
+    .select()
+    .from(connectedRepos)
+    .where(eq(connectedRepos.id, repoId))
+    .limit(1);
+
+  if (!repoRow) {
+    fail(res, "REPO_NOT_FOUND", `No repo found with ID '${repoId}'.`, 404);
+    return;
+  }
+
+  const { owner, repo, stagingUrl } = repoRow;
+
+  if (!stagingUrl) {
+    fail(res, "NO_STAGING_URL", "No staging URL configured for this repo.", 400);
+    return;
+  }
+
+  const runId   = `run_${nanoid(10)}`;
+  const runUUID = crypto.randomUUID();
+
+  await db.insert(runs).values({
+    id:          runUUID,
+    runId,
+    mode:        "ci",
+    status:      "queued",
+    url:         stagingUrl,
+    currentNode: "discovery_agent",
+    ciContext: {
+      // NOTE: no `pr` field — agents use its absence to detect scan mode
+      owner,
+      repo,
+      sha:    "main",
+      branch: "main",
+    },
+    createdAt: new Date(),
+  });
+
+  // Fire pipeline in background — do not await
+  runAgents(runId, runUUID, stagingUrl, "ci").catch((err) => {
+    console.error(`[scanRepo] Pipeline error for ${runId}:`, err);
+  });
+
+  success(res, { runId, runUUID });
 };

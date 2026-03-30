@@ -18,9 +18,18 @@ const CONFIDENCE_MULTIPLIER: Record<string, number> = {
   low:    0.4,
 };
 
-const BUSINESS_IMPACT = (url?: string): number => {
-  if (!url) return 1.0;
-  const path = new URL(url).pathname.toLowerCase();
+const BUSINESS_IMPACT = (file?: string): number => {
+  if (!file) return 1.0;
+
+  // file can be a URL (from performance agent) or a file path (from code_review)
+  // handle both safely
+  let path = file.toLowerCase();
+  try {
+    path = new URL(file).pathname.toLowerCase();
+  } catch {
+    // not a URL — it's a file path like "src/pages/checkout.tsx", use as-is
+  }
+
   if (/checkout|payment|billing|cart/.test(path))  return 2.0;
   if (/login|signup|auth|register/.test(path))      return 2.0;
   if (/dashboard|home|index/.test(path))            return 1.5;
@@ -28,7 +37,7 @@ const BUSINESS_IMPACT = (url?: string): number => {
   return 1.0;
 };
 
-const PASS_THRESHOLD = 95;
+const PASS_THRESHOLD = 99;
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -48,7 +57,7 @@ async function analyzeRootCause(
 
   try {
     const findingsSummary = findings
-      .slice(0, 20) // cap to avoid token overflow
+      .slice(0, 20)
       .map((f) => `[${f.severity.toUpperCase()}] ${f.title} — ${f.detail}`)
       .join("\n");
 
@@ -103,7 +112,7 @@ export async function scoringAgent(
 
   console.log(`[scoring] score: ${overallScore} | passed: ${passed}`);
 
-  // ── Root Cause Analysis (only if score is low or many findings) ──────
+  // ── Root Cause Analysis ──────────────────────────────────────────────
   let rootCause: string | null = null;
   if (!passed || findings.length >= 5) {
     console.log(`[scoring] running root cause analysis...`);

@@ -15,8 +15,10 @@ interface OrchestratorDecision {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const MAX_STEPS = 12;
+const MAX_STEPS        = 12;
 const MAX_AGENT_RETRIES = 2;
+const PASS_THRESHOLD   = 99; // must match scoring.ts and fix.ts
+
 const AGENT_ORDER: AgentName[] = [
   "discovery_agent",
   "performance_agent",
@@ -33,41 +35,30 @@ You are the QA Orchestrator for Orion — an autonomous web quality testing plat
 You manage 6 specialist agents and decide which one runs next based on the current pipeline state.
 
 AGENTS:
-- discovery_agent      → Crawls the website using a real browser. Maps all pages, finds broken links, analyses content. MUST always run first.
-- performance_agent    → Runs Lighthouse on discovered pages. Measures Core Web Vitals (LCP, CLS, FCP, TBT). Requires discovery_agent to have run first.
-- code_review_agent    → Reads the actual PR source files from GitHub and reviews them for security issues, bugs, bad practices, and accessibility problems. Generates findings with file and line references for inline PR comments. ONLY runs in CI mode. MUST run after performance_agent and before scoring_agent. If mode is "manual", skip it and go straight to scoring_agent.
-- scoring_agent        → Takes all findings from previous agents, applies weighted scoring formula, produces 0-100 score and pass/fail verdict. Run after all testing agents complete.
-- fix_agent            → ONLY runs if mode is "ci" AND currentScore < 95. Reads changed PR files, generates AI fixes, commits them back to the PR branch. If mode is "manual" OR currentScore >= 95, skip it and go straight to visualization_agent.
-- visualization_agent  → Saves final results to DB, marks run complete. MUST always run last.
+- discovery_agent      → Crawls the website using a real browser. Maps all pages, finds broken links. MUST always run first.
+- performance_agent    → Runs Lighthouse on discovered pages. Measures Core Web Vitals. Requires discovery_agent first.
+- code_review_agent    → Reviews source files from GitHub for security, bugs, accessibility. ONLY in CI mode. MUST run after performance_agent.
+- scoring_agent        → Applies weighted scoring to all findings. Produces 0-100 score. Run after all testing agents.
+- fix_agent            → Generates and commits AI fixes. ONLY in CI mode. Runs after scoring_agent. The orchestrator code will handle whether to skip it — you do NOT need to decide this.
+- visualization_agent  → Saves final results to DB. MUST always run last. NEVER skip this.
 
 RULES:
-1. discovery_agent MUST run first — always.
-2. performance_agent MUST run after discovery_agent.
-3. code_review_agent MUST run after performance_agent — but ONLY if mode is "ci". If mode is "manual", skip it entirely.
-4. scoring_agent MUST run after performance_agent and code_review_agent (if applicable).
-5. fix_agent runs after scoring_agent — ONLY if mode is "ci" AND currentScore < 95. Otherwise skip it and go to visualization_agent.
-6. visualization_agent MUST run last — only after scoring_agent (and fix_agent if it ran).
-7. NEVER suggest an agent that is already in completedAgents — they cannot run again.
-8. ALWAYS check remainingAgents — only pick from that list.
-9. If remainingAgents is empty, respond with END.
-10. If a critical agent failed twice, skip it and continue with the next remaining agent.
-11. If discovery found 0 pages, skip performance_agent and go straight to code_review_agent (if CI) or scoring_agent (if manual).
+1. discovery_agent MUST always run first.
+2. performance_agent runs after discovery_agent.
+3. code_review_agent runs after performance_agent — ONLY if mode is "ci".
+4. scoring_agent runs after all testing agents complete.
+5. After scoring_agent: suggest fix_agent if it is in remainingAgents.
+6. visualization_agent MUST always run last — never skip it, never signal END before it runs.
+7. NEVER suggest an agent already in completedAgents.
+8. ONLY pick from remainingAgents.
+9. Do NOT signal END until visualization_agent has completed.
+10. If a critical agent failed twice, skip it and move to the next in remainingAgents.
 
-You will receive the current pipeline state as JSON containing:
-- completedAgents: agents that have already run — DO NOT suggest these
-- remainingAgents: agents still to run — ONLY pick from these
-- failedAgents: agents that failed and their attempt count
-- mode: "manual" or "ci" — CRITICAL for deciding whether to run code_review_agent and fix_agent
-- pagesDiscovered: number of pages found by discovery
-- findingsCount: total findings so far
-- currentScore: current overall score (0 before scoring runs)
-- error: any error from the last agent
-
-Respond ONLY with valid JSON in this exact shape:
+Respond ONLY with valid JSON:
 {
   "next": "agent_name or END",
   "reason": "one sentence explaining your decision",
-  "focus": "optional specific instruction for the agent"
+  "focus": "optional instruction for the agent"
 }
 `.trim();
 
@@ -83,8 +74,8 @@ const buildStateContext = (
   );
 
   return JSON.stringify({
-    url:            state.url,
-    mode:           state.mode,
+    url:             state.url,
+    mode:            state.mode,
     completedAgents,
     remainingAgents,
     failedAgents,
@@ -97,8 +88,40 @@ const buildStateContext = (
       low:      state.findings.filter((f) => f.severity === "low").length,
     },
     currentScore: state.overallScore,
+    passed:       state.passed,
     error:        state.error ?? null,
   });
+};
+
+// ─── Hard-coded next agent logic ──────────────────────────────────────────────
+// These rules override the LLM to prevent it from skipping critical agents.
+
+const getHardCodedNext = (
+  state: OrionState,
+  completedAgents: AgentName[]
+): AgentName | null => {
+  const done = (a: AgentName) => completedAgents.includes(a);
+
+  // visualization_agent must always run last — force it if everything else is done
+  if (
+    done("scoring_agent") &&
+    (done("fix_agent") || state.mode !== "ci" || state.overallScore >= PASS_THRESHOLD) &&
+    !done("visualization_agent")
+  ) {
+    return "visualization_agent";
+  }
+
+  // fix_agent must run if: CI mode, score below threshold, scoring done, not yet run
+  if (
+    state.mode === "ci" &&
+    state.overallScore < PASS_THRESHOLD &&
+    done("scoring_agent") &&
+    !done("fix_agent")
+  ) {
+    return "fix_agent";
+  }
+
+  return null; // let LLM decide
 };
 
 // ─── Orchestrator Loop ────────────────────────────────────────────────────────
@@ -118,7 +141,6 @@ export const runOrchestrated = async (
   while (steps < MAX_STEPS) {
     steps++;
 
-    // ── Check if all agents are done ─────────────────────────────────────
     const remainingAgents = AGENT_ORDER.filter(
       (a) => !completedAgents.includes(a)
     );
@@ -128,51 +150,66 @@ export const runOrchestrated = async (
       break;
     }
 
-    // ── Ask orchestrator what to do next ─────────────────────────────────
-    const stateContext = buildStateContext(state, completedAgents, failedAgents);
-    console.log(`\n[orchestrator] step ${steps} — asking LLM for next action...`);
+    // ── Hard-coded override first ─────────────────────────────────────────
+    const forcedNext = getHardCodedNext(state, completedAgents);
 
-    let decision: OrchestratorDecision | null = await askJSON<OrchestratorDecision>(
-      SYSTEM_PROMPT,
-      `Current pipeline state:\n${stateContext}`
-    );
+    let agentName: AgentName;
 
-    // ── Fallback if LLM fails or returns bad JSON ─────────────────────────
-    if (!decision) {
-      console.error("[orchestrator] LLM returned invalid JSON — using fallback order");
-      const next = remainingAgents[0];
-      if (!next) break;
-      decision = {
-        next,
-        reason: "LLM fallback — running default order",
-      };
+    if (forcedNext) {
+      console.log(`\n[orchestrator] step ${steps} — hard-coded rule forcing: ${forcedNext}`);
+      agentName = forcedNext;
+    } else {
+      // ── Ask LLM what to do next ─────────────────────────────────────────
+      const stateContext = buildStateContext(state, completedAgents, failedAgents);
+      console.log(`\n[orchestrator] step ${steps} — asking LLM for next action...`);
+
+      let decision: OrchestratorDecision | null = await askJSON<OrchestratorDecision>(
+        SYSTEM_PROMPT,
+        `Current pipeline state:\n${stateContext}`
+      );
+
+      // Fallback if LLM fails
+      if (!decision) {
+        console.error("[orchestrator] LLM returned invalid JSON — using fallback order");
+        const next = remainingAgents[0];
+        if (!next) break;
+        decision = { next, reason: "LLM fallback — running default order" };
+      }
+
+      console.log(`[orchestrator] decision: ${decision.next} | reason: ${decision.reason}`);
+      if (decision.focus) {
+        console.log(`[orchestrator] focus: ${decision.focus}`);
+      }
+
+      // ── LLM signalled END — but only honour it if viz_agent is done ──────
+      if (decision.next === "END") {
+        if (!completedAgents.includes("visualization_agent")) {
+          console.warn(
+            `[orchestrator] LLM signalled END but visualization_agent hasn't run — forcing it`
+          );
+          agentName = "visualization_agent";
+        } else {
+          console.log(`[orchestrator] LLM signalled END — pipeline complete`);
+          break;
+        }
+      } else {
+        agentName = decision.next as AgentName;
+      }
     }
 
-    console.log(`[orchestrator] decision: ${decision.next} | reason: ${decision.reason}`);
-    if (decision.focus) {
-      console.log(`[orchestrator] focus: ${decision.focus}`);
-    }
-
-    // ── Pipeline complete ─────────────────────────────────────────────────
-    if (decision.next === "END") {
-      console.log(`[orchestrator] LLM signalled END — pipeline complete`);
-      break;
-    }
-
-    const agentName = decision.next as AgentName;
-    const agentFn   = agents[agentName];
+    const agentFn = agents[agentName];
 
     // ── Hard guard — unknown agent ────────────────────────────────────────
     if (!agentFn) {
       console.error(`[orchestrator] unknown agent '${agentName}' — skipping`);
-      completedAgents.push(agentName); // mark done so LLM doesn't loop
+      completedAgents.push(agentName);
       continue;
     }
 
     // ── Hard guard — never re-run a completed agent ───────────────────────
     if (completedAgents.includes(agentName)) {
       console.warn(
-        `[orchestrator] '${agentName}' already completed — LLM tried to re-run it, skipping`
+        `[orchestrator] '${agentName}' already completed — skipping`
       );
       continue;
     }
@@ -181,7 +218,7 @@ export const runOrchestrated = async (
     const failRecord = failedAgents.find((f) => f.agent === agentName);
     if (failRecord && failRecord.attempts >= MAX_AGENT_RETRIES) {
       console.warn(
-        `[orchestrator] '${agentName}' failed ${failRecord.attempts} times — marking done and skipping`
+        `[orchestrator] '${agentName}' failed ${failRecord.attempts} times — skipping`
       );
       completedAgents.push(agentName);
       continue;
@@ -192,7 +229,7 @@ export const runOrchestrated = async (
       logger.agentStarted(state.runId, agentName);
       await updateRunNode(state.runUUID, agentName, "running");
 
-      state = await agentFn(state, decision.focus);
+      state = await agentFn(state, forcedNext ? undefined : undefined);
       completedAgents.push(agentName);
 
       logger.agentCompleted(state.runId, agentName);
