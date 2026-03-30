@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Cpu, PieChart as PieIcon } from "lucide-react";
+import { Cpu, PieChart as PieIcon, BarChart2 as BarIcon } from "lucide-react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -109,7 +109,7 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
         </div>
 
         <div style={{ width: "100%", minHeight: 200, height: 200 }}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <BarChart
               data={agentBreakdown}
               margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
@@ -179,7 +179,7 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
         </div>
 
         <div style={{ width: "100%", minHeight: 200, height: 200 }}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <BarChart
               data={sevBreakdown}
               margin={{ top: 10, right: 8, left: -24, bottom: 0 }}
@@ -250,7 +250,7 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
 
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ width: 140, height: 140, flexShrink: 0, minHeight: 140 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <PieChart>
                 <Pie
                   data={sevBreakdown}

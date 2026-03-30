@@ -29,7 +29,7 @@ export function ScoreTrendCard({ isLoading, scoreTrend, delay = 3 }: ScoreTrendC
                 {isLoading ? (
                     <div className="absolute inset-0 shimmer rounded-lg" />
                 ) : scoreTrend.length >= 2 ? (
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <LineChart data={scoreTrend}>
                             <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#FDE68A", strokeWidth: 1 }} />
                             <Line type="monotone" dataKey="score" name="Score" stroke="#F59E0B" strokeWidth={2.5} dot={{ r: 3, fill: "#F59E0B", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 5 }} />
