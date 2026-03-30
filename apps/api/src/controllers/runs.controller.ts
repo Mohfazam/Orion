@@ -72,20 +72,40 @@ export const createRun = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const activeRun = await db
-    .select({ runId: runs.runId })
+  const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+
+  const activeRuns = await db
+    .select({ runId: runs.runId, id: runs.id, createdAt: runs.createdAt })
     .from(runs)
-    .where(and(eq(runs.url, url), eq(runs.status, "running")))
+    .where(
+      and(
+        eq(runs.url, url),
+        inArray(runs.status, ["queued", "running"] as ("queued" | "running" | "complete" | "failed")[])
+      )
+    )
     .limit(1);
 
-  if (activeRun.length > 0) {
-    fail(
-      res,
-      "RUN_IN_PROGRESS",
-      `A run is already active for ${url}. Wait for it to complete.`,
-      409
-    );
-    return;
+  if (activeRuns.length > 0) {
+    const existingRun = activeRuns[0]!;
+    const ageMs = Date.now() - new Date(existingRun.createdAt).getTime();
+
+    if (ageMs < STALE_THRESHOLD_MS) {
+      fail(
+        res,
+        "RUN_IN_PROGRESS",
+        `A run is already active for ${url}. Wait for it to complete.`,
+        409
+      );
+      return;
+    }
+
+    // Stale run — auto-fail it so a new one can proceed
+    await db
+      .update(runs)
+      .set({ status: "failed", completedAt: new Date() })
+      .where(eq(runs.id, existingRun.id));
+
+    console.warn(`[runner] Stale run ${existingRun.runId} auto-failed after ${Math.round(ageMs / 1000)}s.`);
   }
 
   const runId = generateRunId();
