@@ -32,70 +32,108 @@ const SEV_COLORS = [
 
 export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
   const agentBreakdown = agents.map((agent) => {
-    const key = agent.type.replace("_agent", "");
+    const fills = {
+      discovery: "var(--primary)",
+      performance: "#7C3AED",
+      scoring: "#0891B2",
+      visualization: "var(--success-dark)",
+    };
     return {
-      agent: agent.name || key,
-      findings: findings.filter(f => f.agentType?.replace("_agent", "") === key).length,
-      fill: AGENT_COLORS[key] || "#2563EB",
+      agent: agent.name || agent.agent || agent.type,
+      findings: findings.filter((f) => (f.agent || f.agentType) === (agent.agent || agent.type)).length,
+      fill: (fills as any)[agent.agent || agent.type as keyof typeof fills] || "var(--primary)",
     };
   });
 
   const svMap = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
   if (run?.summary?.bySeverity) {
-    Object.assign(svMap, run.summary.bySeverity);
+    svMap.critical = run.summary.bySeverity.critical || 0;
+    svMap.high = run.summary.bySeverity.high || 0;
+    svMap.medium = run.summary.bySeverity.medium || 0;
+    svMap.low = run.summary.bySeverity.low || 0;
+    svMap.info = run.summary.bySeverity.info || 0;
   } else {
-    findings.forEach(f => { if (svMap[f.severity] !== undefined) svMap[f.severity]++; });
+    findings.forEach((f) => {
+      if (svMap[f.severity] !== undefined) svMap[f.severity]++;
+    });
   }
 
-  const totalFindings = Object.values(svMap).reduce((a, b) => a + b, 0);
-  const sevBreakdown = SEV_COLORS.map((s, i) => ({
-    ...s,
-    value: Object.values(svMap)[i],
-  }));
+  const totalFindings =
+    svMap.critical + svMap.high + svMap.medium + svMap.low + svMap.info;
+
+  const sevBreakdown = [
+    { name: "Critical", value: svMap.critical, color: "var(--danger)" },
+    { name: "High", value: svMap.high, color: "#f97316" },
+    { name: "Medium", value: svMap.medium, color: "#eab308" },
+    { name: "Low", value: svMap.low, color: "var(--primary-light)" },
+    { name: "Info", value: svMap.info, color: "#6b7280" },
+  ];
 
   return (
-    <div className="flex flex-col gap-4">
-
+    <div style={{ flex: 2, display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Agent breakdown */}
       <motion.div
-        className="card p-5 pt-4"
+        style={{
+          background: "var(--bg-card)",
+          borderRadius: 16,
+          padding: 20,
+          border: "1px solid var(--border-subtle)",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.33 }}
       >
-        <div className="flex items-center gap-3 mb-5">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
           <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "var(--accent-light)", border: "1px solid var(--accent-mid)" }}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "var(--primary-bg)",
+            }}
           >
-            <Cpu size={14} style={{ color: "var(--accent)" }} />
+            <Cpu size={14} style={{ color: "var(--primary)" }} />
           </div>
           <div>
-            <h3 className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
+            <h3 style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "var(--text-main)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>
               Findings by Agent
             </h3>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Which agent found the most</p>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)" }}>
+              Which agent found the most
+            </p>
           </div>
         </div>
 
-        <div style={{ height: 144 }}>
+        <div style={{ width: "100%", minHeight: 200, height: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={agentBreakdown} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E8EDF8" vertical={false} />
+            <BarChart
+              data={agentBreakdown}
+              margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--border-light)"
+                vertical={false}
+              />
               <XAxis
                 dataKey="agent"
-                tick={{ fontSize: 10, fill: "#8B97B5", fontFamily: "DM Sans" }}
+                tick={{ fontSize: 11, fill: "var(--text-dim)", fontFamily: "DM Sans" }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fontSize: 10, fill: "#8B97B5", fontFamily: "DM Sans" }}
+                tick={{ fontSize: 10, fill: "var(--text-dim)", fontFamily: "DM Sans" }}
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip content={ChartTooltip} cursor={{ fill: "#EEF3FF" }} />
-              <Bar dataKey="findings" radius={[8, 8, 0, 0]} maxBarSize={36}>
-                {agentBreakdown.map((d) => (
-                  <Cell key={d.agent} fill={d.fill} />
+              <Tooltip content={ChartTooltip} cursor={{ fill: "var(--primary-bg-alt)" }} />
+              <Bar dataKey="findings" radius={[6, 6, 0, 0]} maxBarSize={36}>
+                {agentBreakdown.map((d, index) => (
+                  <Cell key={`${d.agent}-${index}`} fill={d.fill} />
                 ))}
               </Bar>
             </BarChart>
@@ -105,37 +143,121 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
 
       {/* ── Severity Distribution ── */}
       <motion.div
-        className="card p-5 pt-4"
+        style={{
+          background: "var(--bg-card)",
+          borderRadius: 16,
+          padding: 20,
+          border: "1px solid var(--border-subtle)",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.38 }}
+        transition={{ delay: 0.4 }}
       >
-        <div className="flex items-center gap-3 mb-5">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
           <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "#F8FAFC", border: "1px solid var(--border)" }}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "var(--bg-muted)",
+            }}
           >
-            <PieIcon size={14} style={{ color: "var(--text-secondary)" }} />
+            <BarIcon size={14} style={{ color: "#475569" }} />
           </div>
           <div>
-            <h3 className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
-              Severity Distribution
+            <h3 style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "var(--text-main)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>
+              Score Breakdown
             </h3>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {totalFindings} total findings recorded
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)" }}>
+              Severity distribution
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-5">
-          {/* Donut */}
-          <div style={{ width: 108, height: 108, flexShrink: 0 }}>
+        <div style={{ width: "100%", minHeight: 200, height: 200 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={sevBreakdown}
+              margin={{ top: 10, right: 8, left: -24, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--border-light)"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 11, fill: "var(--text-dim)", fontFamily: "DM Sans" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: "var(--text-dim)", fontFamily: "DM Sans" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip cursor={{ fill: "var(--primary-bg-alt)" }} content={ChartTooltip} />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={36}>
+                {sevBreakdown.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
+
+      {/* Severity donut */}
+      <motion.div
+        style={{
+          background: "var(--bg-card)",
+          borderRadius: 16,
+          padding: 20,
+          border: "1px solid var(--border-subtle)",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45 }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "var(--danger-bg)",
+            }}
+          >
+            <PieIcon size={14} style={{ color: "var(--danger-dark)" }} />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "var(--text-main)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>
+              Total Distribution
+            </h3>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)" }}>
+              {totalFindings} total findings
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ width: 140, height: 140, flexShrink: 0, minHeight: 140 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={sevBreakdown}
-                  cx="50%" cy="50%"
-                  innerRadius={30} outerRadius={50}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={36}
+                  outerRadius={56}
                   paddingAngle={3}
                   dataKey="value"
                   startAngle={90} endAngle={-270}
@@ -150,29 +272,55 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
             </ResponsiveContainer>
           </div>
 
-          {/* Legend */}
-          <div className="flex flex-col gap-2 flex-1 pt-2">
-            {sevBreakdown.filter(d => (d.value ?? 0) > 0).map((d) => (
-              <div key={d.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+            {sevBreakdown.map((d) => (
+              <div
+                key={d.name}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ background: d.color }}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                      background: d.color,
+                    }}
                   />
-                  <span className="text-xs font-semibold" style={{ color: "#64748B" }}>
+                  <span
+                    style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}
+                  >
                     {d.name}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <div
-                    className="h-1.5 rounded-full"
                     style={{
-                      width: Math.max(8, totalFindings ? ((d.value ?? 0) / totalFindings) * 50 : 0),
-                      background: d.color + "33",
+                      height: 4,
+                      borderRadius: 2,
+                      width: Math.max(
+                        8,
+                        totalFindings ? (d.value / totalFindings) * 60 : 0
+                      ),
+                      background: d.color + "55",
+                      border: `1px solid ${d.color}88`,
                     }}
                   />
-                  <span className="text-xs font-bold w-4 text-right" style={{ color: "#0F172A" }}>
-                    {d.value ?? 0}
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      width: 20,
+                      textAlign: "right",
+                      color: "var(--text-main)",
+                    }}
+                  >
+                    {d.value}
                   </span>
                 </div>
               </div>

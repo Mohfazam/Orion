@@ -36,11 +36,11 @@ export const FontStyle = () => (
       100% { transform: scale(1.9); opacity: 0;   }
     }
     .pulse-ring {
-      position: absolute; inset: 0; border-radius: 50%;
+      position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 50%;
       animation: pulseRing 1.4s ease-out infinite;
     }
 
-    .row-hover:hover { background-color: #f0f5ff; cursor: pointer; }
+    .row-hover:hover { background-color: var(--primary-bg-alt); cursor: pointer; }
 
     .drawer-backdrop {
       position: fixed; inset: 0;
@@ -51,34 +51,37 @@ export const FontStyle = () => (
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #F8FAFF; }
-    ::-webkit-scrollbar-thumb { background: #DBEAFE; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb { background: var(--primary-border); border-radius: 999px; }
   `}</style>
 );
 
 export function scoreColor(s: number) {
-  if (s >= 80) return { main: "#059669", light: "#ECFDF5", arc: "#10B981", text: "#065F46" };
-  if (s >= 60) return { main: "#D97706", light: "#FFFBEB", arc: "#F59E0B", text: "#92400E" };
-  return       { main: "#DC2626", light: "#FEF2F2", arc: "#EF4444", text: "#7F1D1D" };
+  if (s >= 80) return { main: "var(--success-dark)", light: "var(--success-bg)", arc: "var(--success)", text: "#065F46" };
+  if (s >= 60) return { main: "var(--warn)", light: "var(--warn-bg)", arc: "#F59E0B", text: "#92400E" };
+  return       { main: "var(--danger-dark)", light: "var(--danger-bg)", arc: "var(--danger)", text: "#7F1D1D" };
 }
 
 export function StatusBadge({ status }: { status: RunStatus }) {
   const MAP = {
-    complete: { bg: "#EFF6FF", text: "#1D4ED8", dot: "#3B82F6", label: "Complete" },
+    complete: { bg: "var(--primary-bg)", text: "var(--primary-hover)", dot: "var(--primary-light)", label: "Complete" },
     running:  { bg: "#F5F3FF", text: "#6D28D9", dot: "#8B5CF6", label: "Running"  },
-    queued:   { bg: "#F8FAFC", text: "#64748B", dot: "#94A3B8", label: "Queued"   },
-    failed:   { bg: "#FEF2F2", text: "#DC2626", dot: "#EF4444", label: "Failed"   },
+    queued:   { bg: "var(--bg-muted)", text: "var(--text-muted)", dot: "var(--text-dim)", label: "Queued"   },
+    failed:   { bg: "var(--danger-bg)", text: "var(--danger-dark)", dot: "var(--danger)", label: "Failed"   },
   };
   const s = MAP[status] || MAP.queued;
   return (
     <span
-      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full flex-shrink-0"
-      style={{ background: s.bg, color: s.text, border: `1px solid ${s.text}22` }}
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "4px 12px", 
+        borderRadius: 9999, flexShrink: 0,
+        background: s.bg, color: s.text, border: `1px solid ${s.text}22`
+      }}
     >
-      <span className="relative flex h-2 w-2">
+      <span style={{ position: "relative", display: "flex", height: 8, width: 8 }}>
         {status === "running" && (
           <span className="pulse-ring" style={{ background: s.dot }} />
         )}
-        <span className="relative flex h-2 w-2 rounded-full" style={{ background: s.dot }} />
+        <span style={{ position: "relative", display: "flex", height: 8, width: 8, borderRadius: "50%", background: s.dot }} />
       </span>
       {s.label}
     </span>
@@ -92,16 +95,16 @@ export function ScoreArc({ score }: { score: number }) {
   const dashOffset = circ - (circ * score) / 100;
 
   return (
-    <div className="relative flex-shrink-0" style={{ width: 148, height: 148 }}>
+    <div style={{ position: "relative", flexShrink: 0, width: 148, height: 148 }}>
       <div
-        className="absolute inset-0 rounded-full"
         style={{
+          position: "absolute", top: 0, right: 0, bottom: 0, left: 0, borderRadius: "50%",
           background: sc.light,
           boxShadow: `0 0 0 6px ${sc.arc}18`,
         }}
       />
-      <svg width={148} height={148} style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
-        <circle cx={74} cy={74} r={r} fill="none" stroke="#E2E8F0" strokeWidth={10} />
+      <svg width={148} height={148} style={{ position: "absolute", top: 0, left: 0, transform: "rotate(-90deg)" }}>
+        <circle cx={74} cy={74} r={r} fill="none" stroke="var(--border-muted)" strokeWidth={10} />
         <motion.circle
           cx={74} cy={74} r={r}
           fill="none"
@@ -115,19 +118,21 @@ export function ScoreArc({ score }: { score: number }) {
         />
       </svg>
       <div
-        className="absolute inset-0 flex flex-col items-center justify-center"
-        style={{ color: sc.main }}
+        style={{
+          position: "absolute", top: 0, right: 0, bottom: 0, left: 0, display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          color: sc.main
+        }}
       >
         <motion.span
-          className="bricolage font-extrabold leading-none"
-          style={{ fontSize: 38 }}
+          style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, lineHeight: 1, fontSize: 38 }}
           initial={{ opacity: 0, scale: 0.6 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.5, ease: "backOut" }}
         >
           {score}
         </motion.span>
-        <span className="text-xs font-semibold mt-0.5" style={{ color: sc.main + "99" }}>
+        <span style={{ fontSize: 12, fontWeight: 600, marginTop: 2, color: sc.main + "99" }}>
           /100
         </span>
       </div>
@@ -138,7 +143,7 @@ export function ScoreArc({ score }: { score: number }) {
 export function ChartTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, color: "#334155", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+    <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-muted)", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, color: "var(--text-base)", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
       {payload[0].name ?? payload[0].payload?.name}: <strong>{payload[0].value}</strong>
     </div>
   );

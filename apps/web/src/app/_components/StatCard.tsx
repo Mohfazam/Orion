@@ -11,16 +11,16 @@ export interface StatCardProps {
     delay: number;
 }
 
-export function StatCard({ label, value, sub, subColor = "#94A3B8", icon, accent, delay }: StatCardProps) {
+export function StatCard({ label, value, sub, subColor = "var(--text-dim)", icon, accent, delay }: StatCardProps) {
     return (
         <motion.div
             variants={fadeUp}
             custom={delay}
-            className="bg-white rounded-2xl p-5 flex flex-col gap-3"
-            style={{ border: "1px solid #F1F5F9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+            className="bg-[var(--bg-card)] rounded-2xl p-5 flex flex-col gap-3"
+            style={{ border: "1px solid var(--border-light)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
         >
             <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#94A3B8" }}>
+                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-dim)" }}>
                     {label}
                 </span>
                 <div
@@ -31,7 +31,7 @@ export function StatCard({ label, value, sub, subColor = "#94A3B8", icon, accent
                 </div>
             </div>
             <div>
-                <div className="bricolage text-[2rem] font-extrabold leading-none" style={{ color: accent === "#2563EB" ? "#0F172A" : accent }}>
+                <div className="bricolage text-[2rem] font-extrabold leading-none" style={{ color: accent === "var(--primary)" ? "var(--text-main)" : accent }}>
                     {value}
                 </div>
                 <div className="text-xs mt-1.5 font-medium" style={{ color: subColor }}>

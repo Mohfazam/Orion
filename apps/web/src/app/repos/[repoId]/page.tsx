@@ -10,6 +10,7 @@ import { Repo } from "../../../types/orion";
 import { RepoHero } from "./_components/RepoHero";
 import { RepoStats } from "./_components/RepoStats";
 import { RepoRunsTable } from "./_components/RepoRunsTable";
+import { ThemeToggle } from "../../_components/ThemeToggle";
 
 const FontStyle = () => (
   <style>{`
@@ -22,17 +23,17 @@ const FontStyle = () => (
       background-size: 24px 24px;
     }
 
-    .row-hover:hover { background: #F0F5FF; cursor: pointer; }
+    .row-hover:hover { background: var(--primary-bg-alt); cursor: pointer; }
 
     .input-glow:focus {
       outline: none;
       box-shadow: 0 0 0 3px rgba(37,99,235,0.14);
-      border-color: #2563EB !important;
+      border-color: var(--primary) !important;
     }
 
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #F8FAFF; }
-    ::-webkit-scrollbar-thumb { background: #DBEAFE; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb { background: var(--primary-border); border-radius: 999px; }
 
     @keyframes ping { 75%, 100% { transform: scale(1.8); opacity: 0; } }
     .ping-dot { animation: ping 1.2s cubic-bezier(0,0,0.2,1) infinite; }
@@ -97,17 +98,17 @@ export default function RepoDetailPage() {
 
   if (isLoading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F7F9FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#64748B", fontWeight: 600 }}>Loading repo details...</p>
+      <div style={{ minHeight: "100vh", background: "var(--bg-body)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "var(--text-muted)", fontWeight: 600 }}>Loading repo details...</p>
       </div>
     );
   }
 
   if (error || !repo) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F7F9FF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
-        <p style={{ color: "#DC2626", fontWeight: 700 }}>{error || "Repository not found."}</p>
-        <Link href="/repos" style={{ color: "#2563EB", fontWeight: 600, textDecoration: "none" }}>&larr; Back to Repos</Link>
+      <div style={{ minHeight: "100vh", background: "var(--bg-body)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+        <p style={{ color: "var(--danger-dark)", fontWeight: 700 }}>{error || "Repository not found."}</p>
+        <Link href="/repos" style={{ color: "var(--primary)", fontWeight: 600, textDecoration: "none" }}>&larr; Back to Repos</Link>
       </div>
     );
   }
@@ -133,60 +134,47 @@ export default function RepoDetailPage() {
   return (
     <>
       <FontStyle />
-      <div style={{ minHeight: "100vh", background: "#F7F9FF" }}>
+      <div style={{ minHeight: "100vh", background: "var(--bg-body)" }}>
         
         <nav style={{
           position: "sticky", top: 0, zIndex: 100,
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "0 24px", height: 56,
-          background: "rgba(255,255,255,0.88)",
+          background: "var(--glass-bg)",
           backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
-          borderBottom: "1px solid #EFF3FB",
+          borderBottom: "1px solid var(--border-subtle)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Link
               href="/repos"
-              style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none", color: "#64748B", fontSize: 13, fontWeight: 500 }}
+              style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none", color: "var(--text-muted)", fontSize: 13, fontWeight: 500 }}
             >
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: "#F0F5FF", border: "1px solid #DBEAFE", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <ArrowLeft size={13} style={{ color: "#2563EB" }} />
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--primary-bg-alt)", border: "1px solid var(--primary-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <ArrowLeft size={13} style={{ color: "var(--primary)" }} />
               </div>
               <span className="hidden sm:inline" style={{ display: "none" }}>Repos</span>
             </Link>
 
-            <div style={{ width: 1, height: 20, background: "#E2E8F0" }} />
+            <div style={{ width: 1, height: 20, background: "var(--border-muted)" }} />
 
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 30, height: 30, borderRadius: 9, background: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Target size={14} style={{ color: "#fff" }} />
+              <div style={{ width: 30, height: 30, borderRadius: 9, background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Target size={14} style={{ color: "var(--text-inverse)" }} />
               </div>
-              <span className="bricolage" style={{ fontWeight: 800, fontSize: 18, color: "#0F172A", letterSpacing: "-0.02em" }}>Orion</span>
+              <span className="bricolage" style={{ fontWeight: 800, fontSize: 18, color: "var(--text-main)", letterSpacing: "-0.02em" }}>Orion</span>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <ChevronRight size={13} style={{ color: "#CBD5E1" }} />
-              <Link href="/repos" style={{ fontSize: 12, color: "#94A3B8", fontWeight: 500, textDecoration: "none" }}>Repos</Link>
-              <ChevronRight size={13} style={{ color: "#CBD5E1" }} />
-              <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "monospace", background: "#F0F5FF", color: "#2563EB", padding: "2px 8px", borderRadius: 6 }}>
+              <ChevronRight size={13} style={{ color: "var(--text-faint)" }} />
+              <Link href="/repos" style={{ fontSize: 12, color: "var(--text-dim)", fontWeight: 500, textDecoration: "none" }}>Repos</Link>
+              <ChevronRight size={13} style={{ color: "var(--text-faint)" }} />
+              <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "monospace", background: "var(--primary-bg-alt)", color: "var(--primary)", padding: "2px 8px", borderRadius: 6 }}>
                 {repo.owner}/{repo.repo}
               </span>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            {[
-              { label: "Dashboard", icon: <LayoutDashboard size={13} />, href: "/",      active: false },
-              { label: "Runs",      icon: <List size={13} />,            href: "/runs",  active: false },
-              { label: "Repos",     icon: <GitFork size={13} />,         href: "/repos", active: true  },
-              { label: "Docs",      icon: <BookOpen size={13} />,        href: "/docs",  active: false },
-            ].map((item) => (
-              <Link key={item.label} href={item.href} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: item.active ? 700 : 500, padding: "5px 12px", borderRadius: 10, textDecoration: "none", background: item.active ? "#EFF6FF" : "transparent", color: item.active ? "#1D4ED8" : "#64748B", border: item.active ? "1px solid #DBEAFE" : "1px solid transparent" }}>
-                {item.icon} {item.label}
-              </Link>
-            ))}
-          </div>
-
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg, #3B82F6, #1D4ED8)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 800 }}>T</div>
+          <ThemeToggle />
         </nav>
 
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 20px 80px" }}>

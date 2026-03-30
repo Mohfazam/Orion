@@ -10,9 +10,9 @@ function EmptyState({ filter }: { filter: string }) {
         <div className="flex flex-col items-center justify-center py-24 text-center px-6">
             <div
                 className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5"
-                style={{ background: "#F0F5FF", border: "1.5px solid #DBEAFE" }}
+                style={{ background: "var(--primary-bg-alt)", border: "1.5px solid var(--primary-border)" }}
             >
-                <Activity size={28} style={{ color: "#BFDBFE" }} />
+                <Activity size={28} style={{ color: "var(--primary-border-light)" }} />
             </div>
             <p className="font-semibold text-slate-700 text-base">
                 No {filter !== "All" ? filter.toLowerCase() : ""} runs yet
@@ -22,7 +22,7 @@ function EmptyState({ filter }: { filter: string }) {
             </p>
             <button
                 className="mt-6 flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
-                style={{ background: "#EFF6FF", color: "#1D4ED8", border: "1px solid #DBEAFE" }}
+                style={{ background: "var(--primary-bg)", color: "var(--primary-hover)", border: "1px solid var(--primary-border)" }}
             >
                 <Play size={13} className="fill-current" /> Start your first audit
             </button>
@@ -64,26 +64,26 @@ export function RunsTable({
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.45, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="bg-white rounded-2xl overflow-hidden"
-            style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+            className="bg-[var(--bg-card)] rounded-2xl overflow-hidden"
+            style={{ border: "1px solid var(--border-subtle)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
         >
             {/* Header */}
             <div
                 className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                style={{ borderBottom: "1px solid #F1F5F9" }}
+                style={{ borderBottom: "1px solid var(--border-light)" }}
             >
                 <div className="flex items-center gap-3">
                     <div
                         className="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style={{ background: "#EFF6FF" }}
+                        style={{ background: "var(--primary-bg)" }}
                     >
-                        <Clock size={16} style={{ color: "#2563EB" }} />
+                        <Clock size={16} style={{ color: "var(--primary)" }} />
                     </div>
                     <div>
-                        <h2 className="bricolage font-bold text-lg" style={{ color: "#0F172A" }}>
+                        <h2 className="bricolage font-bold text-lg" style={{ color: "var(--text-main)" }}>
                             Run History
                         </h2>
-                        <p className="text-xs mt-0.5" style={{ color: "#94A3B8" }}>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--text-dim)" }}>
                             {totalCount} audits · sorted by recency
                         </p>
                     </div>
@@ -98,8 +98,8 @@ export function RunsTable({
                             className="text-xs font-semibold px-3.5 py-1.5 rounded-full transition-all"
                             style={
                                 filter === f
-                                    ? { background: "#2563EB", color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }
-                                    : { background: "#F8FAFC", color: "#64748B", border: "1px solid #E2E8F0" }
+                                    ? { background: "var(--primary)", color: "var(--text-inverse)", boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }
+                                    : { background: "var(--bg-muted)", color: "var(--text-muted)", border: "1px solid var(--border-muted)" }
                             }
                         >
                             {f}
@@ -107,8 +107,8 @@ export function RunsTable({
                                 <span
                                     className="ml-1.5 rounded-full px-1 py-0"
                                     style={{
-                                        background: filter === f ? "rgba(255,255,255,0.2)" : "#E2E8F0",
-                                        color: filter === f ? "#fff" : "#94A3B8",
+                                        background: filter === f ? "rgba(255,255,255,0.2)" : "var(--border-muted)",
+                                        color: filter === f ? "#fff" : "var(--text-dim)",
                                         fontSize: 10,
                                     }}
                                 >
@@ -138,7 +138,7 @@ export function RunsTable({
                 <div className="overflow-x-auto">
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                         <thead>
-                            <tr style={{ background: "#FAFBFF" }}>
+                            <tr style={{ background: "var(--bg-subtle)" }}>
                                 {["Website", "Status", "Score", "Result", "Findings", "Run At", ""].map((h, idx) => (
                                     <th
                                         key={h || `header-col-${idx}`}
@@ -147,10 +147,10 @@ export function RunsTable({
                                             padding: "10px 16px",
                                             fontSize: 11,
                                             fontWeight: 600,
-                                            color: "#94A3B8",
+                                            color: "var(--text-dim)",
                                             textTransform: "uppercase",
                                             letterSpacing: "0.07em",
-                                            borderBottom: "1px solid #F1F5F9",
+                                            borderBottom: "1px solid var(--border-light)",
                                         }}
                                     >
                                         {h}
@@ -180,15 +180,15 @@ export function RunsTable({
                                         <div className="flex items-center gap-3">
                                             <div
                                                 className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                                                style={{ background: "#F0F5FF", border: "1px solid #DBEAFE" }}
+                                                style={{ background: "var(--primary-bg-alt)", border: "1px solid var(--primary-border)" }}
                                             >
-                                                <Globe size={15} style={{ color: "#3B82F6" }} />
+                                                <Globe size={15} style={{ color: "var(--primary-light)" }} />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="font-bold text-sm truncate" style={{ color: "#0F172A", maxWidth: 180, fontFamily: "monospace" }}>
+                                                <span className="font-bold text-sm truncate" style={{ color: "var(--text-main)", maxWidth: 180, fontFamily: "monospace" }}>
                                                     {run.url}
                                                 </span>
-                                                <span className="text-xs font-semibold mt-0.5" style={{ color: "#94A3B8" }}>
+                                                <span className="text-xs font-semibold mt-0.5" style={{ color: "var(--text-dim)" }}>
                                                     {run.mode === "api" ? "API Trigger" : "Manual Run"}
                                                 </span>
                                             </div>
@@ -210,14 +210,15 @@ export function RunsTable({
                                     <td style={{ padding: "16px 16px" }}>
                                         <div className="flex items-center gap-3">
                                             <div className="flex flex-col text-xs font-semibold">
-                                                <span style={{ color: "#EF4444" }}>{run.failedRules || 0} issues</span>
-                                                <span style={{ color: "#94A3B8" }}>{run.passedRules || 0} passed</span>
+                                                <span style={{ color: run.failedRules ? "var(--danger)" : "var(--text-dim)" }}>
+                                                    {run.failedRules ? `${run.failedRules} issues` : (run.status === "failed" ? "—" : "0 issues")}
+                                                </span>
                                             </div>
                                         </div>
                                     </td>
                                     {/* Run At */}
                                     <td style={{ padding: "16px 16px" }}>
-                                        <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: "#64748B" }}>
+                                        <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
                                             {new Date(run.createdAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                             {(() => {
                                                 const computedMs = run.durationMs || (run.completedAt && run.createdAt ? (new Date(run.completedAt).getTime() - new Date(run.createdAt).getTime()) : 0);
@@ -225,7 +226,7 @@ export function RunsTable({
                                                 const s = Math.floor(computedMs / 1000);
                                                 const durStr = s < 1 ? "< 1s" : `${Math.floor(s / 60)}m ${s % 60}s`;
                                                 return (
-                                                    <span className="px-1.5 py-0.5 rounded-md" style={{ background: "#F1F5F9", color: "#64748B" }}>
+                                                    <span className="px-1.5 py-0.5 rounded-md" style={{ background: "var(--border-light)", color: "var(--text-muted)" }}>
                                                         {durStr}
                                                     </span>
                                                 )
@@ -234,7 +235,7 @@ export function RunsTable({
                                     </td>
                                     {/* Chevron */}
                                     <td style={{ padding: "16px 16px", textAlign: "right" }}>
-                                        <ChevronRight size={16} style={{ color: "#CBD5E1" }} />
+                                        <ChevronRight size={16} style={{ color: "var(--text-faint)" }} />
                                     </td>
                                 </motion.tr>
                                 );
@@ -245,8 +246,8 @@ export function RunsTable({
             )}
             {/* Pagination */}
             {!isLoading && runs.length > 0 && (
-                <div className="px-6 py-4 flex items-center justify-between" style={{ borderTop: "1px solid #F1F5F9", background: "#FAFBFF" }}>
-                    <span className="text-xs font-semibold" style={{ color: "#94A3B8" }}>
+                <div className="px-6 py-4 flex items-center justify-between" style={{ borderTop: "1px solid var(--border-light)", background: "var(--bg-subtle)" }}>
+                    <span className="text-xs font-semibold" style={{ color: "var(--text-dim)" }}>
                         Showing page {page}
                     </span>
                     <div className="flex gap-2">
@@ -254,7 +255,7 @@ export function RunsTable({
                             onClick={onPrevPage}
                             disabled={!hasPrev}
                             className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-                            style={{ background: "#fff", border: "1px solid #E2E8F0", color: "#475569" }}
+                            style={{ background: "var(--bg-card)", border: "1px solid var(--border-muted)", color: "#475569" }}
                         >
                             Previous
                         </button>
@@ -262,7 +263,7 @@ export function RunsTable({
                             onClick={onNextPage}
                             disabled={!hasNext}
                             className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
-                            style={{ background: "#fff", border: "1px solid #E2E8F0", color: "#475569" }}
+                            style={{ background: "var(--bg-card)", border: "1px solid var(--border-muted)", color: "#475569" }}
                         >
                             Next
                         </button>

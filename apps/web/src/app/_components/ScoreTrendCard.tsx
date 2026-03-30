@@ -14,15 +14,15 @@ export function ScoreTrendCard({ isLoading, scoreTrend, delay = 3 }: ScoreTrendC
         <motion.div
             variants={fadeUp}
             custom={delay}
-            className="bg-white rounded-2xl p-4 flex flex-col justify-between"
-            style={{ border: "1px solid #F1F5F9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+            className="bg-[var(--bg-card)] rounded-2xl p-4 flex flex-col justify-between"
+            style={{ border: "1px solid var(--border-light)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
         >
             <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#94A3B8" }}>
+                <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-dim)" }}>
                     Score Trend
                 </span>
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#FFFBEB" }}>
-                    <TrendingUp size={15} style={{ color: "#D97706" }} />
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--warn-bg)" }}>
+                    <TrendingUp size={15} style={{ color: "var(--warn)" }} />
                 </div>
             </div>
             <div className="flex-1 min-h-[50px] mt-1 relative">
@@ -36,7 +36,7 @@ export function ScoreTrendCard({ isLoading, scoreTrend, delay = 3 }: ScoreTrendC
                         </LineChart>
                     </ResponsiveContainer>
                 ) : (
-                    <div className="bricolage text-[2rem] font-extrabold leading-none" style={{ color: "#0F172A" }}>
+                    <div className="bricolage text-[2rem] font-extrabold leading-none" style={{ color: "var(--text-main)" }}>
                         {scoreTrend.length === 1 ? scoreTrend[0]?.score : "—"}
                     </div>
                 )}
