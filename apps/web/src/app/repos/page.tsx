@@ -8,6 +8,7 @@ import { reposService, CONNECT_REPO_URL } from "../../services/repos.service";
 import { RepoGrid } from "./_components/RepoGrid";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "../_components/ThemeToggle";
 
 const FontStyle = () => (
   <style>{`
@@ -26,7 +27,7 @@ const FontStyle = () => (
     }
 
     .repo-card {
-      background: #fff;
+      background: var(--bg-card);
       border-radius: 20px;
       border: 1.5px solid var(--border-subtle);
       box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
@@ -151,7 +152,7 @@ export default function ReposPage() {
           position: "sticky", top: 0, zIndex: 100,
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "0 24px", height: 56,
-          background: "rgba(255,255,255,0.88)",
+          background: "var(--glass-bg)",
           backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
           borderBottom: "1px solid var(--border-subtle)",
         }}>
@@ -169,7 +170,7 @@ export default function ReposPage() {
           </div>
 
           {/* Center nav */}
-          <div style={{ width: 34, height: 34 }} />
+          <ThemeToggle />
         </nav>
 
         {/* ─── CONTENT ──────────────────────────────── */}
@@ -223,8 +224,8 @@ export default function ReposPage() {
               { label: "Total repos",    value: totalRepos.toString(),    color: "var(--primary)", bg: "var(--primary-bg)", border: "var(--primary-border)", icon: <GitFork size={13} />       },
               { label: "Passing",        value: passing.toString(),       color: "var(--success-dark)", bg: "var(--success-bg)", border: "#A7F3D0", icon: <CheckCircle2 size={13} />   },
               { label: "Failing",        value: failing.toString(),       color: "var(--danger-dark)", bg: "var(--danger-bg)", border: "#FECACA", icon: <XCircle size={13} />        },
-              { label: "Running now",    value: running.toString(),       color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE", icon: <Zap size={13} />            },
-              { label: "Avg score",      value: avgScore.toString(),      color: "var(--warn)", bg: "var(--warn-bg)", border: "#FDE68A", icon: <BarChart2 size={13} />      },
+              { label: "Running now",    value: running.toString(),       color: "#8B5CF6", bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.24)", icon: <Zap size={13} />            },
+              { label: "Avg score",      value: avgScore.toString(),      color: "var(--warn)", bg: "var(--warn-bg)", border: "var(--warn-bg)", icon: <BarChart2 size={13} />      },
             ].map((s) => (
               <div
                 key={s.label}

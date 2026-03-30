@@ -143,7 +143,7 @@ export function RepoRunsTable({ runs, onNewRun }: Readonly<RepoRunsTableProps>) 
 
                   return (
                     <motion.tr
-                      key={run.id}
+                      key={run.runId || run.id || `run-${i}`}
                       className="row-hover"
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -184,7 +184,7 @@ export function RepoRunsTable({ runs, onNewRun }: Readonly<RepoRunsTableProps>) 
 
                       <td style={{ padding: "14px 16px" }}>
                         {durStr
-                          ? <span style={{ fontSize: 12, fontWeight: 600, color: "#475569", fontVariantNumeric: "tabular-nums" }}>{durStr}</span>
+                          ? <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-main)", fontVariantNumeric: "tabular-nums" }}>{durStr}</span>
                           : <span style={{ color: "var(--text-faint)", fontSize: 13 }}>—</span>
                         }
                       </td>
@@ -208,7 +208,7 @@ export function RepoRunsTable({ runs, onNewRun }: Readonly<RepoRunsTableProps>) 
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 18px", borderTop: "1px solid var(--border-light)", background: "var(--bg-subtle)", flexWrap: "wrap", gap: 10 }}>
             <span style={{ fontSize: 12, color: "var(--text-dim)" }}>
-              Showing <strong style={{ color: "#475569" }}>{runs.length}</strong> of <strong style={{ color: "#475569" }}>{runs.length}</strong> runs
+              Showing <strong style={{ color: "var(--text-main)" }}>{runs.length}</strong> of <strong style={{ color: "var(--text-main)" }}>{runs.length}</strong> runs
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <button disabled style={{ width: 30, height: 30, borderRadius: 7, border: "1px solid var(--border-muted)", background: "var(--bg-muted)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "not-allowed", opacity: 0.45 }}>

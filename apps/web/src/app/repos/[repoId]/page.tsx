@@ -10,6 +10,7 @@ import { Repo } from "../../../types/orion";
 import { RepoHero } from "./_components/RepoHero";
 import { RepoStats } from "./_components/RepoStats";
 import { RepoRunsTable } from "./_components/RepoRunsTable";
+import { ThemeToggle } from "../../_components/ThemeToggle";
 
 const FontStyle = () => (
   <style>{`
@@ -139,7 +140,7 @@ export default function RepoDetailPage() {
           position: "sticky", top: 0, zIndex: 100,
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "0 24px", height: 56,
-          background: "rgba(255,255,255,0.88)",
+          background: "var(--glass-bg)",
           backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
           borderBottom: "1px solid var(--border-subtle)",
         }}>
@@ -173,7 +174,7 @@ export default function RepoDetailPage() {
             </div>
           </div>
 
-          <div style={{ width: 34, height: 34 }} />
+          <ThemeToggle />
         </nav>
 
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 20px 80px" }}>

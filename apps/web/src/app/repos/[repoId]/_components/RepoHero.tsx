@@ -111,7 +111,7 @@ export function RepoHero({ repo, isEditingUrl, onEditUrlToggle, onSaveUrl, onDis
               disabled={isSaving}
               style={{
                 background: isEditingUrl ? "var(--warn-bg)" : "var(--bg-muted)",
-                color: isEditingUrl ? "var(--warn)" : "#475569",
+                color: isEditingUrl ? "var(--warn)" : "var(--text-main)",
                 borderColor: isEditingUrl ? "#FDE68A" : "var(--border-muted)",
                 opacity: isSaving ? 0.6 : 1, cursor: isSaving ? "not-allowed" : "pointer"
               }}
@@ -153,7 +153,7 @@ export function RepoHero({ repo, isEditingUrl, onEditUrlToggle, onSaveUrl, onDis
                     disabled={isSaving}
                     autoFocus
                     className="input-glow"
-                    style={{ width: "100%", height: 42, paddingLeft: 36, paddingRight: 14, fontSize: 13, color: "var(--text-main)", fontFamily: "monospace", background: "#F8FAFF", border: "1.5px solid var(--primary-border)", borderRadius: 12, outline: "none" }}
+                    style={{ width: "100%", height: 42, paddingLeft: 36, paddingRight: 14, fontSize: 13, color: "var(--text-main)", fontFamily: "monospace", background: "var(--bg-muted)", border: "1.5px solid var(--primary-border)", borderRadius: 12, outline: "none" }}
                   />
                 </div>
                 <button
@@ -189,7 +189,7 @@ export function RepoHero({ repo, isEditingUrl, onEditUrlToggle, onSaveUrl, onDis
                 href={repo.stagingUrl || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 12, background: "#F8FAFF", border: "1.5px solid var(--border-subtle)", textDecoration: "none", transition: "border-color 0.14s", maxWidth: 520 }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 12, background: "var(--bg-muted)", border: "1.5px solid var(--border-subtle)", textDecoration: "none", transition: "border-color 0.14s", maxWidth: 520 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--primary-border-light)"; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-subtle)"; }}
               >
@@ -212,7 +212,7 @@ export function RepoHero({ repo, isEditingUrl, onEditUrlToggle, onSaveUrl, onDis
             <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ color: "var(--text-faint)" }}>{m.icon}</span>
               <span style={{ fontSize: 12, color: "var(--text-dim)", fontWeight: 500 }}>{m.label}:</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#475569", fontFamily: m.mono ? "monospace" : undefined }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-main)", fontFamily: m.mono ? "monospace" : undefined }}>
                 {m.value}
               </span>
             </div>

@@ -106,7 +106,7 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
             {(repo as any).branch || (repo as any).lastCommit ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5 }}>
                   {(repo as any).branch && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#7C3AED", background: "#F5F3FF", border: "1px solid #DDD6FE", padding: "2px 8px", borderRadius: 999, fontWeight: 600 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#A78BFA", background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.24)", padding: "2px 8px", borderRadius: 999, fontWeight: 600 }}>
                         <GitBranch size={10} /> {(repo as any).branch}
                       </span>
                   )}
@@ -162,7 +162,7 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
                     style={{
                       width: "100%", height: 36, paddingLeft: 30, paddingRight: 10,
                       fontSize: 12, color: "var(--text-main)", fontFamily: "monospace",
-                      background: "#F8FAFF", border: "1.5px solid var(--primary-border)",
+                      background: "var(--bg-muted)", border: "1.5px solid var(--primary-border)",
                       borderRadius: 10, outline: "none",
                     }}
                   />
@@ -205,14 +205,14 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
               style={{
                 display: "flex", alignItems: "center", gap: 7, marginBottom: 14,
                 padding: "8px 12px", borderRadius: 10,
-                background: "#F8FAFF", border: "1px solid var(--border-subtle)",
+                background: "var(--bg-muted)", border: "1px solid var(--border-subtle)",
                 textDecoration: "none", transition: "border-color 0.14s",
               }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--primary-border-light)")}
               onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border-subtle)")}
             >
               <Globe size={12} style={{ color: "var(--primary)", flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: "#475569", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+              <span style={{ fontSize: 12, color: "var(--text-main)", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                 {(repo.stagingUrl || "").replace(/^https?:\/\//, "")}
               </span>
             </motion.a>
@@ -280,21 +280,15 @@ export function RepoCard({ repo, isEditing, onEdit, onCancelEdit, onSaveUrl, onD
 
       <div style={{ borderTop: "1px solid var(--border-light)", padding: "12px 20px", background: "var(--bg-subtle)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: "auto" }}>
         <div style={{ display: "flex", gap: 6 }}>
-          {repo.lastRun ? (
-              <a
-                href={`/runs/${repo.lastRun.runId}`}
-                className="outline-btn"
-                style={{ background: "var(--primary-bg)", color: "var(--primary-hover)", borderColor: "var(--primary-border-light)", textDecoration: "none" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--primary-border)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--primary-bg)"; }}
-              >
-                <BarChart2 size={12} /> View Output
-              </a>
-          ) : (
-             <span className="outline-btn" style={{ background: "var(--bg-muted)", color: "var(--text-dim)", borderColor: "var(--border-muted)", cursor: "not-allowed" }}>
-                 <BarChart2 size={12} /> View Output
-             </span>
-          )}
+          <a
+            href={`/repos/${repo.id}`}
+            className="outline-btn"
+            style={{ background: "var(--primary-bg)", color: "var(--primary-hover)", borderColor: "var(--primary-border-light)", textDecoration: "none" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--primary-border)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--primary-bg)"; }}
+          >
+            <BarChart2 size={12} /> View Output
+          </a>
 
           <button
             onClick={isEditing ? onCancelEdit : () => { onEdit(); setEditVal(repo.stagingUrl); }}
