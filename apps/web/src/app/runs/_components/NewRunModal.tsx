@@ -60,7 +60,7 @@ export function NewRunModal({ isOpen, onClose }: NewRunModalProps) {
           onClick={(e) => e.stopPropagation()}
           style={{
             width: "100%", maxWidth: 480,
-            background: "#fff",
+            background: "var(--bg-card)",
             borderRadius: 24,
             boxShadow: "0 24px 64px rgba(15,23,42,0.18)",
             overflow: "hidden",
@@ -69,30 +69,30 @@ export function NewRunModal({ isOpen, onClose }: NewRunModalProps) {
           <div style={{ padding: "24px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 12, background: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Target size={16} style={{ color: "#fff" }} />
+                <div style={{ width: 36, height: 36, borderRadius: 12, background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Target size={16} style={{ color: "var(--text-inverse)" }} />
                 </div>
-                <h2 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: 22, color: "#0F172A" }}>
+                <h2 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: 22, color: "var(--text-main)" }}>
                   Start New Audit
                 </h2>
               </div>
-              <p style={{ fontSize: 13, color: "#94A3B8", paddingLeft: 46 }}>
+              <p style={{ fontSize: 13, color: "var(--text-dim)", paddingLeft: 46 }}>
                 Paste a URL — Orion will deploy 4 agents immediately.
               </p>
             </div>
             <button
               onClick={onClose}
               disabled={loading}
-              style={{ width: 34, height: 34, borderRadius: 10, background: "#F8FAFC", border: "1px solid #E2E8F0", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+              style={{ width: 34, height: 34, borderRadius: 10, background: "var(--bg-muted)", border: "1px solid var(--border-muted)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
             >
-              <X size={14} style={{ color: "#64748B" }} />
+              <X size={14} style={{ color: "var(--text-muted)" }} />
             </button>
           </div>
 
           <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 12px rgba(15,23,42,0.07)", border: "1.5px solid #E2E8F0" }}>
+            <div style={{ display: "flex", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 12px rgba(15,23,42,0.07)", border: "1.5px solid var(--border-muted)" }}>
               <div style={{ position: "relative", flex: 1 }}>
-                <Globe size={15} style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", left: 14, color: "#94A3B8", pointerEvents: "none" }} />
+                <Globe size={15} style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", left: 14, color: "var(--text-dim)", pointerEvents: "none" }} />
                 <input
                   type="url"
                   placeholder="https://yoursite.com"
@@ -104,8 +104,8 @@ export function NewRunModal({ isOpen, onClose }: NewRunModalProps) {
                   style={{
                     width: "100%", height: 52,
                     paddingLeft: 40, paddingRight: 14,
-                    fontSize: 14, color: "#0F172A",
-                    background: "#fff", border: "none", outline: "none",
+                    fontSize: 14, color: "var(--text-main)",
+                    background: "var(--bg-card)", border: "none", outline: "none",
                   }}
                 />
               </div>
@@ -113,7 +113,7 @@ export function NewRunModal({ isOpen, onClose }: NewRunModalProps) {
                 onClick={handleSubmit}
                 disabled={loading || !url}
                 style={{
-                  background: loading ? "#94A3B8" : !url ? "#bfdbfe" : "#2563EB", color: "#fff",
+                  background: loading ? "var(--text-dim)" : !url ? "var(--primary-border-light)" : "var(--primary)", color: "var(--text-inverse)",
                   fontWeight: 700, fontSize: 13,
                   padding: "0 22px", border: "none",
                   cursor: loading || !url ? "not-allowed" : "pointer", display: "flex",
@@ -126,20 +126,20 @@ export function NewRunModal({ isOpen, onClose }: NewRunModalProps) {
               </button>
             </div>
             
-            {error && <div style={{ color: "#DC2626", fontSize: 13, fontWeight: 600 }}>{error}</div>}
+            {error && <div style={{ color: "var(--danger-dark)", fontSize: 13, fontWeight: 600 }}>{error}</div>}
 
             <div style={{ display: "flex", gap: 16, paddingLeft: 2 }}>
               {["Crawls all linked pages", "Results in ~2 minutes", "4 AI agents"].map((h, i) => (
-                <span key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#94A3B8", fontWeight: 500 }}>
+                <span key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-dim)", fontWeight: 500 }}>
                   <CheckCircle2 size={11} style={{ color: "#86EFAC" }} /> {h}
                 </span>
               ))}
             </div>
 
-            <div style={{ height: 1, background: "#F1F5F9", margin: "4px 0" }} />
+            <div style={{ height: 1, background: "var(--border-light)", margin: "4px 0" }} />
 
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#94A3B8", marginBottom: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-dim)", marginBottom: 8 }}>
                 Run Mode
               </div>
               <div style={{ display: "flex", gap: 8 }}>
@@ -157,9 +157,9 @@ export function NewRunModal({ isOpen, onClose }: NewRunModalProps) {
                         display: "flex", alignItems: "center", gap: 7,
                         fontSize: 13, fontWeight: 600,
                         padding: "8px 16px", borderRadius: 10,
-                        background: active ? "#EFF6FF" : "#F8FAFC",
-                        color: active ? "#1D4ED8" : "#64748B",
-                        border: active ? "1.5px solid #BFDBFE" : "1.5px solid #E2E8F0",
+                        background: active ? "var(--primary-bg)" : "var(--bg-muted)",
+                        color: active ? "var(--primary-hover)" : "var(--text-muted)",
+                        border: active ? "1.5px solid var(--primary-border-light)" : "1.5px solid var(--border-muted)",
                         cursor: loading ? "default" : "pointer",
                       }}
                     >

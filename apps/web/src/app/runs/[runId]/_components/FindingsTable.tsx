@@ -33,60 +33,82 @@ export function FindingsTable({
 }: FindingsTableProps) {
   return (
     <motion.div
-      className="xl:flex-[3] bg-white rounded-2xl overflow-hidden flex flex-col"
-      style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+      style={{
+        flex: 3,
+        background: "var(--bg-card)",
+        borderRadius: 16,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        border: "1px solid var(--border-subtle)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
     >
       <div
-        className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between"
-        style={{ borderBottom: "1px solid #F1F5F9" }}
+        style={{
+          padding: "16px 20px",
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 12,
+          justifyContent: "space-between",
+          borderBottom: "1px solid var(--border-light)"
+        }}
       >
-        <div className="flex items-center gap-3">
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: "#FEF2F2" }}
+            style={{
+              width: 36, height: 36, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
+              background: "var(--danger-bg)"
+            }}
           >
-            <AlertTriangle size={16} style={{ color: "#DC2626" }} />
+            <AlertTriangle size={16} style={{ color: "var(--danger-dark)" }} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="bricolage font-bold text-base" style={{ color: "#0F172A" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h2 style={{ margin: 0, fontWeight: 700, fontSize: 16, color: "var(--text-main)", fontFamily: "'Bricolage Grotesque', sans-serif" }}>
                 Findings
               </h2>
               <span
-                className="text-xs font-bold px-2 py-0.5 rounded-full"
-                style={{ background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA" }}
+                style={{
+                  fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 9999,
+                  background: "var(--danger-bg)", color: "var(--danger-dark)", border: "1px solid #FECACA"
+                }}
               >
                 {totalFindings}
               </span>
             </div>
-            <p className="text-xs" style={{ color: "#94A3B8" }}>
+            <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)" }}>
               Click any row to inspect
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           {SEV_FILTERS.map((f) => {
             const sevKey = f.toLowerCase() as Severity;
-            const dot = f === "All" ? "#2563EB" : SEV[sevKey]?.color;
+            const dot = f === "All" ? "var(--primary)" : SEV[sevKey]?.color;
             const active = sevFilter === f;
             return (
               <button
                 key={f}
                 onClick={() => onSevFilterChange(f)}
-                className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition-all"
-                style={
-                  active
-                    ? { background: "#2563EB", color: "#fff", boxShadow: "0 2px 8px rgba(37,99,235,0.28)" }
-                    : { background: "#F8FAFC", color: "#64748B", border: "1px solid #E2E8F0" }
-                }
+                style={{
+                  display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 9999,
+                  transition: "all 0.15s", cursor: "pointer",
+                  ...(active
+                    ? { background: "var(--primary)", color: "var(--text-inverse)", boxShadow: "0 2px 8px rgba(37,99,235,0.28)", border: "1px solid var(--primary)" }
+                    : { background: "var(--bg-muted)", color: "var(--text-muted)", border: "1px solid var(--border-muted)" })
+                }}
               >
                 <span
-                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  style={{ background: active ? "#fff" : dot }}
+                  style={{
+                    width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                    background: active ? "#fff" : dot
+                  }}
                 />
                 {f}
               </button>
@@ -95,23 +117,17 @@ export function FindingsTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ background: "#FAFBFF" }}>
+            <tr style={{ background: "var(--bg-subtle)" }}>
               {["Severity", "Title", "Agent", "Location", "Confidence"].map((h) => (
                 <th
                   key={h}
-                  className="text-left"
                   style={{
-                    padding: "10px 16px",
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: "#94A3B8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.07em",
-                    borderBottom: "1px solid #F1F5F9",
-                    whiteSpace: "nowrap",
+                    textAlign: "left", padding: "10px 16px", fontSize: 10, fontWeight: 700,
+                    color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.07em",
+                    borderBottom: "1px solid var(--border-light)", whiteSpace: "nowrap",
                   }}
                 >
                   {h}
@@ -122,7 +138,7 @@ export function FindingsTable({
           <tbody>
             {findings.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-12 text-center text-sm font-medium text-slate-400">
+                <td colSpan={5} style={{ padding: "48px 16px", textAlign: "center", fontSize: 14, fontWeight: 500, color: "var(--text-dim)" }}>
                   No findings to display.
                 </td>
               </tr>
@@ -130,7 +146,6 @@ export function FindingsTable({
               findings.map((f, i) => (
                 <motion.tr
                   key={f.id || `finding-${i}`}
-                  className="row-hover"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
@@ -138,53 +153,62 @@ export function FindingsTable({
                   style={{
                     borderBottom: i < findings.length - 1 ? "1px solid #F8FAFF" : "none",
                     transition: "background 0.13s",
+                    cursor: "pointer",
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "var(--bg-muted)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
                 >
                   <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
                     <SeverityBadge severity={f.severity} />
                   </td>
                   <td style={{ padding: "13px 16px", minWidth: 200 }}>
-                    <span className="text-sm font-semibold" style={{ color: "#0F172A" }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text-main)" }}>
                       {f.title}
                     </span>
                   </td>
                   <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
                     <span
-                      className="text-xs font-semibold px-2 py-0.5 rounded-md uppercase"
-                      style={{ background: "#F0F5FF", color: "#1D4ED8" }}
+                      style={{
+                        fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 6, textTransform: "uppercase",
+                        background: "var(--primary-bg-alt)", color: "var(--primary-hover)"
+                      }}
                     >
-                      {f.agentType}
+                      {f.agent || f.agentType}
                     </span>
                   </td>
                   <td style={{ padding: "13px 16px", maxWidth: 160 }}>
                     <span
-                      className="text-xs font-mono truncate block"
-                      style={{ color: "#64748B" }}
+                      style={{
+                        fontSize: 12, color: "var(--text-muted)", fontFamily: "monospace",
+                        display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
+                      }}
                     >
                       {f.file}
                     </span>
                   </td>
                   <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
                     {f.confidence !== undefined ? (
-                      <div className="flex items-center gap-2">
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div
-                          className="w-16 h-1.5 rounded-full overflow-hidden"
-                          style={{ background: "#E2E8F0" }}
+                          style={{
+                            width: 64, height: 6, borderRadius: 9999, overflow: "hidden",
+                            background: "var(--border-muted)"
+                          }}
                         >
                           <div
-                            className="h-full rounded-full"
                             style={{
+                              height: "100%", borderRadius: 9999,
                               width: `${f.confidence}%`,
-                              background: SEV[f.severity]?.color || "#cbd5e1",
+                              background: SEV[f.severity]?.color || "var(--text-faint)"
                             }}
                           />
                         </div>
-                        <span className="text-xs font-semibold" style={{ color: "#475569" }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>
                           {f.confidence}%
                         </span>
                       </div>
                     ) : (
-                      <span className="text-xs font-semibold" style={{ color: "#94a3b8" }}>N/A</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-dim)" }}>N/A</span>
                     )}
                   </td>
                 </motion.tr>
@@ -195,29 +219,37 @@ export function FindingsTable({
       </div>
 
       <div
-        className="px-5 py-3.5 flex items-center justify-between mt-auto"
-        style={{ borderTop: "1px solid #F1F5F9", background: "#FAFBFF" }}
+        style={{
+          padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginTop: "auto", borderTop: "1px solid var(--border-light)", background: "var(--bg-subtle)"
+        }}
       >
-        <span className="text-xs" style={{ color: "#94A3B8" }}>
+        <span style={{ fontSize: 12, color: "var(--text-dim)" }}>
           Showing {findings.length} findings, Page {page}
         </span>
-        <div className="flex items-center gap-1">
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={!hasPrev}
-            className="w-7 h-7 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-            style={{ background: "#F0F5FF", border: "1px solid #DBEAFE" }}
+            style={{
+              width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+              background: "var(--primary-bg-alt)", border: "1px solid var(--primary-border)",
+              opacity: !hasPrev ? 0.5 : 1, cursor: !hasPrev ? "not-allowed" : "pointer"
+            }}
           >
-            <ChevronLeft size={13} style={{ color: "#2563EB" }} />
+            <ChevronLeft size={13} style={{ color: "var(--primary)" }} />
           </button>
-          <span className="px-2 text-xs font-semibold text-slate-500">{page}</span>
+          <span style={{ padding: "0 8px", fontSize: 12, fontWeight: 600, color: "var(--text-muted)" }}>{page}</span>
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={!hasNext}
-            className="w-7 h-7 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-            style={{ background: "#F0F5FF", border: "1px solid #DBEAFE" }}
+            style={{
+              width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+              background: "var(--primary-bg-alt)", border: "1px solid var(--primary-border)",
+              opacity: !hasNext ? 0.5 : 1, cursor: !hasNext ? "not-allowed" : "pointer"
+            }}
           >
-            <ChevronRight size={13} style={{ color: "#2563EB" }} />
+            <ChevronRight size={13} style={{ color: "var(--primary)" }} />
           </button>
         </div>
       </div>

@@ -36,9 +36,9 @@ export function RunsFilter({
         display: "flex", alignItems: "center", gap: 10,
         flexWrap: "wrap", marginBottom: 18,
         padding: "14px 18px",
-        background: "#fff",
+        background: "var(--bg-card)",
         borderRadius: 16,
-        border: "1px solid #EFF3FB",
+        border: "1px solid var(--border-subtle)",
         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
       }}
       initial={{ opacity: 0, y: 10 }}
@@ -46,16 +46,16 @@ export function RunsFilter({
       transition={{ delay: 0.08, duration: 0.4 }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginRight: 4 }}>
-        <SlidersHorizontal size={14} style={{ color: "#94A3B8" }} />
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#CBD5E1" }}>
+        <SlidersHorizontal size={14} style={{ color: "var(--text-dim)" }} />
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-faint)" }}>
           Filter
         </span>
       </div>
 
-      <div style={{ width: 1, height: 20, background: "#E2E8F0", marginRight: 4 }} />
+      <div style={{ width: 1, height: 20, background: "var(--border-muted)", marginRight: 4 }} />
 
       <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "#CBD5E1", marginRight: 2 }}>Status</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-faint)", marginRight: 2 }}>Status</span>
         {STATUS_FILTERS.map((f) => (
           <button
             key={f}
@@ -63,17 +63,17 @@ export function RunsFilter({
             className={`pill-btn ${f === statusFilter ? "pill-active" : "pill-inactive"}`}
           >
             {f !== "All" && (
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: f === statusFilter ? "rgba(255,255,255,0.6)" : "#CBD5E1", flexShrink: 0 }} />
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: f === statusFilter ? "rgba(255,255,255,0.6)" : "var(--text-faint)", flexShrink: 0 }} />
             )}
             {f}
           </button>
         ))}
       </div>
 
-      <div style={{ width: 1, height: 20, background: "#E2E8F0", margin: "0 4px" }} />
+      <div style={{ width: 1, height: 20, background: "var(--border-muted)", margin: "0 4px" }} />
 
       <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "#CBD5E1", marginRight: 2 }}>Mode</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-faint)", marginRight: 2 }}>Mode</span>
         {MODE_FILTERS.map((f) => (
           <button 
             key={f} 
@@ -87,10 +87,10 @@ export function RunsFilter({
         ))}
       </div>
 
-      <div style={{ width: 1, height: 20, background: "#E2E8F0", margin: "0 4px" }} />
+      <div style={{ width: 1, height: 20, background: "var(--border-muted)", margin: "0 4px" }} />
 
       <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "#CBD5E1", marginRight: 2 }}>Result</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-faint)", marginRight: 2 }}>Result</span>
         {PF_FILTERS.map((f) => (
            <button 
              key={f} 

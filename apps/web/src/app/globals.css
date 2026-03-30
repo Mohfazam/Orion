@@ -5,4 +5,122 @@ body {
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+:root {
+  /* Backgrounds */
+  --bg-body: #F7F9FF;
+  --bg-card: #ffffff;
+  --bg-subtle: #FAFBFF;
+  --bg-muted: #F8FAFC;
+  --bg-hover: #F0F5FF;
+  
+  /* Text */
+  --text-main: #0F172A;
+  --text-strong: #1E293B;
+  --text-base: #334155;
+  --text-muted: #64748B;
+  --text-dim: #94A3B8;
+  --text-faint: #CBD5E1;
+  --text-inverse: #ffffff;
+
+  /* Borders */
+  --border-light: #F1F5F9;
+  --border-subtle: #EFF3FB;
+  --border-muted: #E2E8F0;
+
+  /* Primary Blue */
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --primary-light: #3B82F6;
+  --primary-bg: #EFF6FF;
+  --primary-bg-alt: #F0F5FF;
+  --primary-border: #DBEAFE;
+  --primary-border-light: #BFDBFE;
+
+  /* Success Green */
+  --success: #10B981;
+  --success-dark: #059669;
+  --success-bg: #ECFDF5;
+
+  /* Danger Red */
+  --danger: #EF4444;
+  --danger-dark: #DC2626;
+  --danger-bg: #FEF2F2;
+
+  /* Warn Yellow */
+  --warn: #D97706;
+  --warn-bg: #FFFBEB;
+
+  /* Other Accents */
+  --accent-purple: #7C3AED;
+  --accent-cyan: #0891B2;
+  
+  /* Special */
+  --glass-bg: rgba(255, 255, 255, 0.88);
+}
+
+.dark {
+  /* Backgrounds */
+  --bg-body: #020617;     /* Slate 950 */
+  --bg-card: #0F172A;     /* Slate 900 */
+  --bg-subtle: #0B0F19;   /* Very deep */
+  --bg-muted: #1E293B;    /* Slate 800 */
+  --bg-hover: #1E293B;    /* Slate 800 */
+  
+  /* Text */
+  --text-main: #F8FAFC;   /* Slate 50 */
+  --text-strong: #FFFFFF; /* Pure white */
+  --text-base: #E2E8F0;   /* Slate 200 */
+  --text-muted: #94A3B8;  /* Slate 400 */
+  --text-dim: #64748B;    /* Slate 500 */
+  --text-faint: #475569;  /* Slate 600 */
+  --text-inverse: #020617;/* Slate 950 */
+
+  /* Borders */
+  --border-light: #1E293B;/* Slate 800 */
+  --border-subtle: #1E293B;/* Slate 800 */
+  --border-muted: #334155;/* Slate 700 */
+
+  /* Primary Blue */
+  --primary: #3B82F6;     /* Brighter blue on dark */
+  --primary-hover: #60A5FA;
+  --primary-light: #93C5FD;
+  --primary-bg: #172554;  /* Deep blue */
+  --primary-bg-alt: #1E3A8A;
+  --primary-border: #1E40AF;
+  --primary-border-light: #1D4ED8;
+
+  /* Success Green */
+  --success: #34D399;
+  --success-dark: #6EE7B7;
+  --success-bg: #064E3B;
+
+  /* Danger Red */
+  --danger: #F87171;
+  --danger-dark: #FCA5A5;
+  --danger-bg: #7F1D1D;
+
+  /* Warn Yellow */
+  --warn: #FBBF24;
+  --warn-bg: #78350F;
+
+  /* Other Accents */
+  --accent-purple: #A78BFA;
+  --accent-cyan: #22D3EE;
+  
+  /* Special */
+  --glass-bg: rgba(15, 23, 42, 0.88);
+}
+:root {
+  --accent: #2563EB;
+  --accent-mid: #BFDBFE;
+  --accent-light: #EFF6FF;
+  --border: #E2E8F0;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
 }

@@ -6,15 +6,19 @@ export const metadata: Metadata = {
   description: "AI-powered website auditing",
 };
 
+import { ThemeProvider } from "./_components/ThemeProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

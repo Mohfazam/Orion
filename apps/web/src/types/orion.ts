@@ -21,8 +21,10 @@ export interface Run {
   passed?: boolean;
   createdAt: string;
   updatedAt: string;
+  completedAt?: string;
   durationMs?: number;
   findings?: number;
+  agentResults?: AgentInfo[];
   prevRunId?: string;
   mode?: 'manual' | 'ci' | 'api';
   summary?: {
@@ -39,7 +41,8 @@ export interface Run {
 export interface Finding {
   id: string;
   runId: string;
-  agentType: AgentType;
+  agent: AgentType;
+  agentType?: AgentType;
   severity: Severity;
   createdAt: string;
   title: string;
@@ -51,8 +54,9 @@ export interface Finding {
 
 export interface AgentInfo {
   id: string;
-  type: AgentType;
-  name: string;
+  agent: AgentType;
+  type?: AgentType;
+  name?: string;
   status: 'queued' | 'running' | 'complete' | 'failed';
   durationMs?: number;
   score?: number;

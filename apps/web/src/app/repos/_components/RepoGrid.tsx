@@ -14,8 +14,8 @@ function EmptyState() {
       transition={{ duration: 0.4 }}
     >
       <div style={{ position: "relative", marginBottom: 28 }}>
-        <div style={{ width: 100, height: 100, borderRadius: "50%", border: "1.5px dashed #BFDBFE", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ width: 72, height: 72, borderRadius: 20, background: "#EFF6FF", border: "2px solid #DBEAFE", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 100, height: 100, borderRadius: "50%", border: "1.5px dashed var(--primary-border-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 72, height: 72, borderRadius: 20, background: "var(--primary-bg)", border: "2px solid var(--primary-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <GitFork size={30} style={{ color: "#93C5FD" }} />
           </div>
         </div>
@@ -25,22 +25,22 @@ function EmptyState() {
           const x = Math.round(r * Math.cos(angle));
           const y = Math.round(r * Math.sin(angle));
           return (
-            <div key={i} style={{ position: "absolute", top: `calc(50% + ${y}px - 4px)`, left: `calc(50% + ${x}px - 4px)`, width: 8, height: 8, borderRadius: "50%", background: i % 2 === 0 ? "#BFDBFE" : "#DDD6FE" }} />
+            <div key={i} style={{ position: "absolute", top: `calc(50% + ${y}px - 4px)`, left: `calc(50% + ${x}px - 4px)`, width: 8, height: 8, borderRadius: "50%", background: i % 2 === 0 ? "var(--primary-border-light)" : "#DDD6FE" }} />
           );
         })}
       </div>
 
-      <h3 className="bricolage" style={{ fontSize: 20, fontWeight: 700, color: "#0F172A", marginBottom: 8 }}>
+      <h3 className="bricolage" style={{ fontSize: 20, fontWeight: 700, color: "var(--text-main)", marginBottom: 8 }}>
         No repos connected yet
       </h3>
-      <p style={{ fontSize: 13, color: "#94A3B8", maxWidth: 340, lineHeight: 1.75, marginBottom: 24 }}>
+      <p style={{ fontSize: 13, color: "var(--text-dim)", maxWidth: 340, lineHeight: 1.75, marginBottom: 24 }}>
         Connect your GitHub repositories to start monitoring every deployment automatically with AI-powered audits.
       </p>
       <a
         href="https://github.com/apps/orion-audit"
         target="_blank"
         rel="noopener noreferrer"
-        style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#2563EB", color: "#fff", fontWeight: 700, fontSize: 13, padding: "11px 22px", borderRadius: 14, textDecoration: "none", boxShadow: "0 2px 12px rgba(37,99,235,0.3)" }}
+        style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--primary)", color: "var(--text-inverse)", fontWeight: 700, fontSize: 13, padding: "11px 22px", borderRadius: 14, textDecoration: "none", boxShadow: "0 2px 12px rgba(37,99,235,0.3)" }}
       >
         <GitFork size={14} /> Connect GitHub Repo
       </a>
