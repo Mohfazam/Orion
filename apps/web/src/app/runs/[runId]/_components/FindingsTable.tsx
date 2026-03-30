@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, GitPullRequestArrow } from "lucide-react";
 import { Finding, Severity } from "../../../../types/orion";
 import { SEV, SeverityBadge } from "./FindingDrawer";
 
@@ -87,33 +87,59 @@ export function FindingsTable({
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          {SEV_FILTERS.map((f) => {
-            const sevKey = f.toLowerCase() as Severity;
-            const dot = f === "All" ? "var(--primary)" : SEV[sevKey]?.color;
-            const active = sevFilter === f;
-            return (
-              <button
-                key={f}
-                onClick={() => onSevFilterChange(f)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 9999,
-                  transition: "all 0.15s", cursor: "pointer",
-                  ...(active
-                    ? { background: "var(--primary)", color: "var(--text-inverse)", boxShadow: "0 2px 8px rgba(37,99,235,0.28)", border: "1px solid var(--primary)" }
-                    : { background: "var(--bg-muted)", color: "var(--text-muted)", border: "1px solid var(--border-muted)" })
-                }}
-              >
-                <span
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            {SEV_FILTERS.map((f) => {
+              const sevKey = f.toLowerCase() as Severity;
+              const dot = f === "All" ? "var(--primary)" : SEV[sevKey]?.color;
+              const active = sevFilter === f;
+              return (
+                <button
+                  key={f}
+                  onClick={() => onSevFilterChange(f)}
                   style={{
-                    width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-                    background: active ? "#fff" : dot
+                    display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 9999,
+                    transition: "all 0.15s", cursor: "pointer",
+                    ...(active
+                      ? { background: "var(--primary)", color: "var(--text-inverse)", boxShadow: "0 2px 8px rgba(37,99,235,0.28)", border: "1px solid var(--primary)" }
+                      : { background: "var(--bg-muted)", color: "var(--text-muted)", border: "1px solid var(--border-muted)" })
                   }}
-                />
-                {f}
-              </button>
-            );
-          })}
+                >
+                  <span
+                    style={{
+                      width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                      background: active ? "#fff" : dot
+                    }}
+                  />
+                  {f}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => { }}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 9999,
+              background: "linear-gradient(135deg, var(--primary), #7C3AED)",
+              color: "#fff", border: "none", cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(37,99,235,0.30)",
+              transition: "all 0.18s",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.opacity = "0.88";
+              (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.opacity = "1";
+              (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+            }}
+          >
+            <GitPullRequestArrow size={13} />
+            Create PR
+          </button>
         </div>
       </div>
 
