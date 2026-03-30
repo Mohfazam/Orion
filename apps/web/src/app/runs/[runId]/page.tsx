@@ -41,7 +41,7 @@ export default function RunDetailPage() {
   const [hasPrev, setHasPrev] = useState(false);
   const [hasNext, setHasNext] = useState(false);
   const [sevFilter, setSevFilter] = useState<SevFilter>("All");
-  
+
   // Drawer State
   const [activeFinding, setActiveFinding] = useState<Finding | null>(null);
 
@@ -53,14 +53,14 @@ export default function RunDetailPage() {
   // 1. Initial Load (Run + Agents)
   useEffect(() => {
     setIsLoadingRun(true);
-    
+
     Promise.all([
       runsService.getRunById(runId).catch(e => { console.error(e); return null; }),
       agentsService.getRunAgents(runId).catch(e => { console.error(e); return []; })
     ]).then(([rData, aData]) => {
       setRun(rData);
       setAgents(rData?.agentResults || (Array.isArray(aData) ? aData : []) || []);
-      
+
       if (rData?.prevRunId) {
         runsService.getRunDiff(rData.runId, { previousRunId: rData.prevRunId })
           .then(setDiffData)
@@ -77,7 +77,7 @@ export default function RunDetailPage() {
       try {
         const params: any = { limit: 20, page: findingsPage };
         if (sevFilter !== "All") params.severity = sevFilter.toLowerCase();
-        
+
         const res = await findingsService.getRunFindings(runId, params);
         setFindings(res.data || []);
         setFindingsTotal(res.total || 0);
@@ -92,7 +92,7 @@ export default function RunDetailPage() {
 
   // 3. Socket Event Handling
   const processedEventsCount = useRef(0);
-  
+
   useEffect(() => {
     if (!events.length) return;
     const newEvents = events.slice(processedEventsCount.current);
@@ -103,20 +103,20 @@ export default function RunDetailPage() {
       if (eventType === 'agent_started' || eventType === 'node.started') {
         const agentName = ev.agent || (ev.node ? ev.node.replace(/_agent$/, '') : '');
         setAgents(prev => prev.map(a => (a.agent || a.type) === agentName ? { ...a, status: 'running' } : a));
-      } 
+      }
       else if (eventType === 'agent_completed' || eventType === 'node.complete') {
         const agentName = ev.agent || (ev.node ? ev.node.replace(/_agent$/, '') : '');
-        setAgents(prev => prev.map(a => 
+        setAgents(prev => prev.map(a =>
           (a.agent || a.type) === agentName ? { ...a, status: 'complete', durationMs: ev.durationMs, score: ev.score } : a
         ));
-      } 
+      }
       else if (eventType === 'node.failed') {
         const agentName = (ev.node || '').replace(/_agent$/, '');
         setAgents(prev => prev.map(a => (a.agent || a.type) === agentName ? { ...a, status: 'failed' } : a));
       }
       else if (eventType === 'score_updated') {
         setRun(prev => prev ? { ...prev, overallScore: ev.meta?.score } : prev);
-        
+
         setAgents(prev => {
           if (prev.filter(a => a.status === 'complete').length === 4) {
             runsService.getRunById(runId).then(r => {
@@ -126,7 +126,7 @@ export default function RunDetailPage() {
           }
           return prev;
         });
-      } 
+      }
       else if (eventType === 'log' || eventType === 'node.log') {
         const entry: LogEntry = {
           agent: ev.agent || (ev.node || '').replace(/_agent$/, ''),
@@ -217,7 +217,7 @@ export default function RunDetailPage() {
     <>
       <FontStyle />
       <div className="min-h-screen" style={{ background: "var(--bg-body)" }}>
-        
+
         <nav
           className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-12 py-3"
           style={{
@@ -282,9 +282,8 @@ export default function RunDetailPage() {
         <div style={{ maxWidth: 1536, margin: "0 auto", padding: "32px 24px", display: "flex", flexDirection: "column", gap: 24 }}>
           <PipelineStepper agents={agents} />
 
-<<<<<<< HEAD
           {/* Tab Navigation */}
-          <div className="flex items-center gap-8" style={{ borderBottom: "1px solid #E2E8F0" }}>
+          <div className="flex items-center gap-8" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
             {[
               { id: 'dashboard' as const, label: 'Overview' },
               { id: 'compare' as const, label: 'Comparison' },
@@ -294,37 +293,7 @@ export default function RunDetailPage() {
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
                 className="relative pb-3 text-sm font-bold transition-all outline-none"
-                style={{ color: activeTab === t.id ? "#0F172A" : "#64748B" }}
-=======
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
-            <FindingsTable 
-              findings={findings}
-              totalFindings={findingsTotal}
-              sevFilter={sevFilter}
-              onSevFilterChange={setSevFilter}
-              onRowClick={handleRowClick}
-              page={findingsPage}
-              hasNext={hasNext}
-              hasPrev={hasPrev}
-              onPageChange={setFindingsPage}
-            />
-            
-            <FindingsCharts findings={findings} agents={agents} run={run} />
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-              <input 
-                type="text" 
-                value={compareId}
-                onChange={(e) => setCompareId(e.target.value)}
-                placeholder="Compare Run ID..."
-                style={{ padding: "6px 12px", fontSize: 14, fontWeight: 500, outline: "none", border: "1px solid var(--border-muted)", borderRadius: 10, minWidth: 180, color: "var(--text-main)", height: 36 }}
-              />
-              <button 
-                onClick={() => { if (compareId) runsService.getRunDiff(runId, { compareWith: compareId }).then(setDiffData).catch(console.error); }}
-                style={{ cursor: "pointer", padding: "6px 16px", fontSize: 14, fontWeight: 600, color: "var(--text-inverse)", background: "var(--primary)", borderRadius: 10, height: 36, border: "none" }}
->>>>>>> 12e73b980ced08471812e1fe2aca4cf88d54e5d8
+                style={{ color: activeTab === t.id ? "var(--text-main)" : "var(--text-muted)" }}
               >
                 <div className="flex items-center gap-1.5">
                   {t.label}
@@ -339,7 +308,7 @@ export default function RunDetailPage() {
                   <motion.div
                     layoutId="activeTabIndicator"
                     className="absolute -bottom-[1px] left-0 right-0 h-0.5 rounded-t-full"
-                    style={{ background: "#2563EB", zIndex: 10 }}
+                    style={{ background: "var(--primary)", zIndex: 10 }}
                   />
                 )}
               </button>
@@ -357,7 +326,7 @@ export default function RunDetailPage() {
             {activeTab === 'dashboard' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 <div className="lg:col-span-8 flex flex-col gap-6 w-full">
-                  <FindingsTable 
+                  <FindingsTable
                     findings={findings}
                     totalFindings={findingsTotal}
                     sevFilter={sevFilter}
@@ -377,22 +346,22 @@ export default function RunDetailPage() {
 
             {activeTab === 'compare' && (
               <div className="flex flex-col gap-6 w-full max-w-4xl">
-                <div 
-                  className="flex items-center gap-3 bg-white p-2.5 rounded-2xl" 
-                  style={{ border: "1px solid #EFF3FB", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                <div
+                  className="flex items-center gap-3 p-2.5 rounded-2xl"
+                  style={{ background: "var(--glass-bg)", border: "1px solid var(--border-subtle)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                 >
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={compareId}
                     onChange={(e) => setCompareId(e.target.value)}
                     placeholder="Compare with specific Run ID..."
                     className="flex-1 px-3 py-2 text-sm font-semibold outline-none bg-transparent"
-                    style={{ color: "#0F172A" }}
+                    style={{ color: "var(--text-main)" }}
                   />
-                  <button 
+                  <button
                     onClick={() => { if (compareId) runsService.getRunDiff(runId, { compareWith: compareId }).then(setDiffData).catch(console.error); }}
-                    className="px-5 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 active:scale-95 rounded-xl shrink-0"
-                    style={{ background: "#2563EB", boxShadow: "0 2px 10px rgba(37,99,235,0.25)" }}
+                    className="px-5 py-2 text-sm font-bold transition-opacity hover:opacity-90 active:scale-95 rounded-xl shrink-0"
+                    style={{ color: "var(--text-inverse)", background: "var(--primary)", boxShadow: "0 2px 10px rgba(37,99,235,0.25)" }}
                   >
                     Compare Run
                   </button>
