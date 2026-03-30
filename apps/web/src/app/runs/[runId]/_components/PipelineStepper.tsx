@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Cpu, CheckCircle2, XCircle, Clock, ScanLine, Zap, Target, BarChart2 } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, ScanLine, Zap, Target, BarChart2 } from "lucide-react";
 import { AgentInfo } from "../../../../types/orion";
 import { formatDuration } from "./shared";
 
@@ -10,6 +10,27 @@ export interface PipelineStepperProps {
 }
 
 const AGENT_ORDER = ["discovery", "performance", "scoring", "visualization"];
+
+const AGENT_META: Record<string, {
+  name: string;
+  desc: string;
+  icon: React.ReactNode;
+  color: string;
+  bg: string;
+  border: string;
+}> = {
+  discovery: { name: "Discovery", desc: "Crawls pages & maps site structure", icon: <ScanLine size={15} />, color: "#2563EB", bg: "#EEF3FF", border: "#BFDBFE" },
+  performance: { name: "Performance", desc: "Audits load speed & resource budget", icon: <Zap size={15} />, color: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
+  scoring: { name: "Scoring", desc: "Weights findings into a 0–100 score", icon: <Target size={15} />, color: "#0891B2", bg: "#F0FBFF", border: "#BAE6FD" },
+  visualization: { name: "Visualization", desc: "Generates charts and diff analysis", icon: <BarChart2 size={15} />, color: "#059669", bg: "#ECFDF5", border: "#A7F3D0" },
+};
+
+const STATUS_STYLE = {
+  complete: { ring: "#BFDBFE", dot: "#2563EB", label: "Done", labelColor: "#2563EB", labelBg: "#EEF3FF" },
+  running: { ring: "#DDD6FE", dot: "#7C3AED", label: "Running", labelColor: "#7C3AED", labelBg: "#F5F3FF" },
+  queued: { ring: "#E2E8F0", dot: "#CBD5E1", label: "Queued", labelColor: "#94A3B8", labelBg: "#F8FAFC" },
+  failed: { ring: "#FECACA", dot: "#EF4444", label: "Failed", labelColor: "#DC2626", labelBg: "#FEF2F2" },
+};
 
 export function PipelineStepper({ agents }: PipelineStepperProps) {
   const PIPELINE = AGENT_ORDER.map((typeKey) => {
@@ -33,6 +54,10 @@ export function PipelineStepper({ agents }: PipelineStepperProps) {
     };
   });
 
+  // Progress: how many steps are complete
+  const doneCount = PIPELINE.filter(p => p.status === "complete").length;
+  const progressPct = (doneCount / PIPELINE.length) * 100;
+
   return (
     <motion.div
       style={{
@@ -44,7 +69,7 @@ export function PipelineStepper({ agents }: PipelineStepperProps) {
       }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.25, duration: 0.45 }}
+      transition={{ delay: 0.2, duration: 0.45 }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
         <div
@@ -62,6 +87,24 @@ export function PipelineStepper({ agents }: PipelineStepperProps) {
           <p style={{ margin: 0, fontSize: 12, color: "var(--text-dim)" }}>
             4 agents · tracking execution sequence
           </p>
+        </div>
+        {/* Compact progress pill */}
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+          style={{ background: "var(--accent-light)", border: "1px solid var(--accent-mid)" }}
+        >
+          <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--accent-mid)" }}>
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: "var(--accent)" }}
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </div>
+          <span className="text-xs font-bold mono" style={{ color: "var(--accent)" }}>
+            {Math.round(progressPct)}%
+          </span>
         </div>
       </div>
 
@@ -93,7 +136,31 @@ export function PipelineStepper({ agents }: PipelineStepperProps) {
                     boxShadow: step.status === "complete" ? "0 0 0 4px var(--primary-bg)" : undefined,
                   }}
                 >
-                  {s.icon}
+                  {step.status === "running" && (
+                    <span
+                      className="absolute inset-0 rounded-full animate-ping opacity-30"
+                      style={{ background: step.color }}
+                    />
+                  )}
+                  {step.status === "complete" ? (
+                    <CheckCircle2 size={16} style={{ color: step.color }} />
+                  ) : step.status === "failed" ? (
+                    <XCircle size={16} style={{ color: "#DC2626" }} />
+                  ) : (
+                    <span style={{ color: step.status === "running" ? step.color : "#CBD5E1" }}>
+                      {step.icon}
+                    </span>
+                  )}
+                </div>
+
+                {/* Name */}
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span
+                    className="text-xs sm:text-sm font-bold"
+                    style={{ color: step.status === "queued" ? "var(--text-muted)" : "var(--text-primary)" }}
+                  >
+                    {step.name}
+                  </span>
                 </div>
                 {!isLast && (
                   <div

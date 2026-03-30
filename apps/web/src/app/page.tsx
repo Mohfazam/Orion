@@ -333,7 +333,7 @@ export default function DashboardPage() {
 
                         {/* URL Input */}
                         <motion.div
-                            className="flex items-stretch max-w-2xl mx-auto"
+                            className="relative flex items-stretch max-w-2xl mx-auto"
                             style={{
                                 borderRadius: 16,
                                 boxShadow: inputFocused

@@ -1,18 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Cpu, PieChart as PieIcon, BarChart as BarIcon } from "lucide-react";
+import { Cpu, PieChart as PieIcon } from "lucide-react";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from "recharts";
 import { Finding, AgentInfo, Run } from "../../../../types/orion";
 import { ChartTooltip } from "./shared";
@@ -22,6 +14,21 @@ export interface FindingsChartsProps {
   agents: AgentInfo[];
   run?: Run;
 }
+
+const AGENT_COLORS: Record<string, string> = {
+  discovery: "#2563EB",
+  performance: "#7C3AED",
+  scoring: "#0891B2",
+  visualization: "#059669",
+};
+
+const SEV_COLORS = [
+  { name: "Critical", color: "#EF4444" },
+  { name: "High", color: "#F97316" },
+  { name: "Medium", color: "#EAB308" },
+  { name: "Low", color: "#3B82F6" },
+  { name: "Info", color: "#6B7280" },
+];
 
 export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
   const agentBreakdown = agents.map((agent) => {
@@ -75,7 +82,7 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
         }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35 }}
+        transition={{ delay: 0.33 }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
           <div
@@ -134,7 +141,7 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
         </div>
       </motion.div>
 
-      {/* Severity breakdown (Bar Chart) */}
+      {/* ── Severity Distribution ── */}
       <motion.div
         style={{
           background: "var(--bg-card)",
@@ -253,8 +260,7 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
                   outerRadius={56}
                   paddingAngle={3}
                   dataKey="value"
-                  startAngle={90}
-                  endAngle={-270}
+                  startAngle={90} endAngle={-270}
                   stroke="none"
                 >
                   {sevBreakdown.map((d) => (

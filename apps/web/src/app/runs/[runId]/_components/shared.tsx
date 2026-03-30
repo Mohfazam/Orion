@@ -11,6 +11,16 @@ export const FontStyle = () => (
     *, *::before, *::after { font-family: 'DM Sans', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
     .bricolage { font-family: 'Bricolage Grotesque', sans-serif; }
 
+    :root {
+      --accent: #2563EB;
+      --accent-mid: #BFDBFE;
+      --accent-light: #EFF6FF;
+      --border: #E2E8F0;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+    }
+
     .dot-bg {
       background-image: radial-gradient(circle, #c7d7f0 1px, transparent 1px);
       background-size: 24px 24px;

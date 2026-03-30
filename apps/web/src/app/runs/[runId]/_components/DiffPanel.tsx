@@ -91,7 +91,7 @@ export function DiffPanel({ diff }: DiffPanelProps) {
           {
             label: "New Findings",
             value: diff.newCount,
-            icon: <AlertTriangle size={14} />,
+            icon: <AlertTriangle size={15} />,
             bg: "#FFF7ED", border: "#FED7AA", text: "#EA580C", muted: "#FDBA74",
           },
           {
