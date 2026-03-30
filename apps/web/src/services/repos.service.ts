@@ -1,7 +1,8 @@
 import { Repo } from '../types/orion';
 import api from '../lib/axios';
 
-export const CONNECT_REPO_URL = `${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}/api/v1/repos/connect`;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+export const CONNECT_REPO_URL = `${API_BASE}/repos/connect`;
 
 export const reposService = {
   getRepos: (): Promise<Repo[]> => {

@@ -56,9 +56,8 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
   return (
     <div className="flex flex-col gap-4">
 
-      {/* ── Agent Bar Chart ── */}
       <motion.div
-        className="card p-5"
+        className="card p-5 pt-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.33 }}
@@ -106,7 +105,7 @@ export function FindingsCharts({ findings, agents, run }: FindingsChartsProps) {
 
       {/* ── Severity Distribution ── */}
       <motion.div
-        className="card p-5"
+        className="card p-5 pt-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.38 }}
