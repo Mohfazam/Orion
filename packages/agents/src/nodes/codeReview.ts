@@ -319,7 +319,7 @@ export async function codeReviewAgent(state: OrionState): Promise<OrionState> {
 
     await saveAgentResult(
       state.runUUID,
-      "scoring",
+      "hygiene",
       {
         mode: isScanMode ? "scan" : "pr",
         filesReviewed: toReview.length,
@@ -346,6 +346,6 @@ export async function codeReviewAgent(state: OrionState): Promise<OrionState> {
   return {
     ...state,
     findings: [...state.findings, ...newFindings],
-    currentNode: "performance_agent",
+    currentNode: "scoring_agent",
   };
 }

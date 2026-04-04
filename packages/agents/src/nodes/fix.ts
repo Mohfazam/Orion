@@ -264,18 +264,17 @@ export async function fixAgent(state: OrionState): Promise<OrionState> {
     let toFix: typeof state.findings;
 
     if (isScanMode) {
-      // Scan mode: take any critical/high finding with a real file path
-      // No need to cross-check against repo file list — just attempt it directly
+      // Scan mode: take critical/high/medium findings with a real file path
       toFix = state.findings
         .filter(
           (f) =>
-            (f.severity === "critical" || f.severity === "high") &&
+            (f.severity === "critical" || f.severity === "high" || f.severity === "medium") &&
             isRealFilePath(f.file)
         )
         .slice(0, MAX_FILES_TO_FIX);
 
       console.log(
-        `[fix_agent] Scan mode — ${toFix.length} critical/high finding(s) with real file paths`
+        `[fix_agent] Scan mode — ${toFix.length} critical/high/medium finding(s) with real file paths`
       );
     } else {
       // PR mode: only fix files that were actually changed in the PR
@@ -373,14 +372,17 @@ ${fileContent}`
       }
     }
 
-    // ── Scan mode: open a PR ───────────────────────────────────────────
-    if (isScanMode && fixedCount > 0) {
+    // ── Scan mode: open a PR (as long as the branch was created) ──────
+    if (isScanMode && fixBranch !== branch) {
       console.log("[fix_agent] Opening fix PR...");
 
       const prBody = `## 🤖 Orion QA — Automated Fix PR
 
 Orion ran a full QA audit on \`main\` and found **${state.findings.length} issues** (score: **${state.overallScore}/100**).
-This PR contains AI-generated fixes for ${fixedCount} critical/high severity finding(s).
+${fixedCount > 0
+  ? `This PR contains AI-generated fixes for **${fixedCount}** of ${toFix.length} finding(s).`
+  : `Orion attempted to fix ${toFix.length} finding(s) but could not auto-commit the changes. Please review the findings manually.`
+}
 
 ### What to do
 1. Review the changes in this PR
@@ -392,7 +394,7 @@ This PR contains AI-generated fixes for ${fixedCount} critical/high severity fin
 
       const createdPr = await createPullRequest(
         octokit, owner, repo,
-        `fix(orion-qa): Automated fixes — ${fixedCount} issues resolved (score: ${state.overallScore}/100)`,
+        `fix(orion-qa): ${fixedCount > 0 ? `${fixedCount} automated fix(es)` : "QA audit complete"} — score: ${state.overallScore}/100`,
         prBody,
         fixBranch,
         "main"

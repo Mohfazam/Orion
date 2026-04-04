@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import crypto from "crypto";
-import { db, connectedRepos, runs, findings, agentResults, eq } from "@repo/db";
+import { db, connectedRepos, runs, findings, agentResults, eq, and } from "@repo/db";
 import { runAgents } from "@repo/agents";
 import { nanoid } from "nanoid";
 import {
@@ -140,7 +140,10 @@ export const handleGithubWebhook = async (
         let rootCause: string | undefined;
         if (run) {
           const scoringResult = await db.query.agentResults.findFirst({
-            where: eq(agentResults.runId, run.id),
+            where: and(
+              eq(agentResults.runId, run.id),
+              eq(agentResults.agent, "scoring")
+            ),
           });
           const data = scoringResult?.data as { rootCause?: string } | null;
           rootCause = data?.rootCause ?? undefined;
